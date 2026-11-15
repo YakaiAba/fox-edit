@@ -44,7 +44,10 @@ input,select,textarea{font:inherit;font-size:16px;color:var(--tx)}
 #ov{pointer-events:none}
 #empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--ink);text-align:center;padding:24px}
 #empty svg.logo{width:104px;height:104px;filter:url(#wob)}
-#empty .bt{min-width:210px;font-size:17px;padding:13px 26px}
+#empty .bt{font-size:17px;padding:13px 18px}
+#empty .rw{display:flex;gap:10px}
+#empty .rw .bt{min-width:130px}
+#empty>.bt{min-width:270px}
 #empty .big{background:var(--mint);color:var(--ink2);font-weight:700;font-size:17px;padding:13px 26px;border:1.8px solid var(--ink);border-radius:var(--wob)}
 #empty small{color:var(--mut);max-width:290px}
 #bFit{position:absolute;right:10px;bottom:10px;background:#fff;border:1.5px solid var(--ink);color:var(--ink2);border-radius:var(--wob);padding:6px 12px;font-size:13px}
@@ -142,6 +145,14 @@ select.sel,input.txt{width:100%;border:1.5px solid var(--ink);border-radius:var(
 .tp.on svg rect{fill:#fff}
 .credit{font-size:11.5px;color:var(--mut);margin:2px 0 4px}
 .sec{border-top:1.5px dashed var(--line);margin-top:4px;padding-top:2px}
+#camOv{position:fixed;inset:0;z-index:80;background:var(--paper);display:flex;flex-direction:column}
+#camOv .ct{display:flex;align-items:center;gap:8px;padding:calc(env(safe-area-inset-top) + 6px) 10px 6px}
+#camOv .ct .ttl{flex:1;text-align:center;font:400 20px FoxHand,FoxBody,sans-serif;color:var(--ink2)}
+#camOv .vf{flex:1;min-height:0;background:#111;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#camOv .vf canvas{max-width:100%;max-height:100%}
+#camOv .cp{background:#fff;border-top:1.8px solid var(--ink);padding:6px 10px calc(env(safe-area-inset-bottom) + 10px)}
+#camOv .shot{display:flex;justify-content:center;padding-top:6px}
+#camOv .shot button{width:66px;height:66px;border-radius:50%;border:3px solid var(--ink);background:var(--mint);box-shadow:inset 0 0 0 4px #fff}
 </style>
 </head>
 <body>
@@ -159,7 +170,7 @@ select.sel,input.txt{width:100%;border:1.5px solid var(--ink);border-radius:var(
   </header>
   <div id="stageBox">
     <div id="zoom"><canvas id="view"></canvas><canvas id="ov"></canvas></div>
-    <div id="empty"><svg class="logo" viewBox="0 0 100 100" fill="none" stroke="#5B6B8C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="68" cy="30" r="12" fill="#F3D9A4"/><path d="M10 80 38 40l16 22 10-12 26 30z" fill="#A8D5C8"/><path d="M38 40l-9 13 9-3 7 8" stroke="#8CC0B0"/></svg><button class="bt" id="bCam">Chụp ảnh</button><button class="bt" id="bPick">Chọn ảnh</button><button class="bt" id="bCollage">Ghép nhiều ảnh</button><small>Ảnh được xử lý ngay trong máy, không gửi đi đâu. Giữ nút nửa tròn trên cùng để xem ảnh gốc.</small></div>
+    <div id="empty"><svg class="logo" viewBox="0 0 100 100" fill="none" stroke="#5B6B8C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="68" cy="30" r="12" fill="#F3D9A4"/><path d="M10 80 38 40l16 22 10-12 26 30z" fill="#A8D5C8"/><path d="M38 40l-9 13 9-3 7 8" stroke="#8CC0B0"/></svg><div class="rw"><button class="bt" id="bCam">Chụp ảnh</button><button class="bt" id="bPick">Chọn ảnh</button></div><button class="bt" id="bCollage">Ghép nhiều ảnh</button><small>Ảnh được xử lý ngay trong máy, không gửi đi đâu. Giữ nút nửa tròn trên cùng để xem ảnh gốc.</small></div>
     <button id="bFit" hidden>⤢ Vừa khung</button>
   </div>
   <section id="panel"></section>
@@ -174,7 +185,7 @@ select.sel,input.txt{width:100%;border:1.5px solid var(--ink);border-radius:var(
 <div id="busy" hidden><div class="sp"></div><div id="busyMsg">Đang xử lý…</div><div class="pb"><div id="busyBar"></div></div></div>
 <script>
 'use strict';
-var APP_VER='3.12 (16/11/2026)';
+var APP_VER='3.13 (16/11/2026)';
 function $(s,r){return (r||document).querySelector(s)}
 function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
 function clamp(v,a,b){return v<a?a:(v>b?b:v)}
@@ -2201,30 +2212,14 @@ ACT.wmSaveDef=function(){var w=doc.p.wm;LOCAL.wm={on:w.on,text:w.text,logo:w.log
 
 /* ----- nhập ảnh, ảnh mẫu, logo ----- */
 $('#bPick').addEventListener('click',function(){$('#fileMain').value='';$('#fileMain').click()});
-$('#bCam').addEventListener('click',async function(){
-  var r=await dialog('<h3>Chụp ảnh</h3><div class="dbtn" style="flex-direction:column"><button class="bt" data-r="g">Gốc</button><button class="bt" data-r="f">Màu film</button></div><p style="font-size:12px;margin:8px 0 0;color:var(--mut)">Gốc: ảnh theo camera của máy. Màu film: thêm màu film vào ảnh vừa chụp.</p><div class="dbtn"><button class="bt" data-r="0">Bỏ qua</button></div>');
-  if(r.v==='0')return;
-  ui.camFilm=null;
-  if(r.v==='f'){
-    var r2=await dialog('<h3>Chọn màu film</h3><select class="sel" id="cfC">'+FILM.map(function(c,i){return '<option value="'+i+'">'+esc(c.name)+'</option>'}).join('')+'</select><select class="sel" id="cfF" style="margin-top:8px"></select><div class="dbtn"><button class="bt" data-r="0">Bỏ qua</button><button class="bt pri" data-r="1">Chụp</button></div>',function(m){
-      var C=m.querySelector('#cfC'),F=m.querySelector('#cfF');
-      function fill(){F.innerHTML=FILM[+C.value].list.map(function(p,i){return '<option value="'+i+'">'+esc(p.name)+'</option>'}).join('')}
-      C.addEventListener('change',fill);fill();
-    });
-    if(r2.v!=='1')return;
-    ui.camFilm={c:+r2.root.querySelector('#cfC').value,i:+r2.root.querySelector('#cfF').value};
-  }
-  $('#fileCam').value='';$('#fileCam').click();
-});
-$('#fileCam').addEventListener('change',async function(e){
-  var f=e.target.files&&e.target.files[0];if(!f)return;
-  await loadFile(f);
-  if(ui.camFilm&&doc.base){doc.p.film={c:ui.camFilm.c,i:ui.camFilm.i,t:1};commit();modelChanged();refreshPanel()}
-  ui.camFilm=null;
-});
+$('#bCam').addEventListener('click',function(){openCam()});
+$('#fileCam').addEventListener('change',function(e){var f=e.target.files&&e.target.files[0];if(f)loadFile(f)});
 $('#bOpen').addEventListener('click',async function(){
-  if(doc.base&&HI>0&&!(await askConfirm('Mở ảnh khác','Ảnh đang sửa sẽ bị đóng. Hãy lưu trước nếu cần.','Mở ảnh khác',false)))return;
-  $('#fileMain').value='';$('#fileMain').click();
+  if(!doc.base){$('#fileMain').value='';$('#fileMain').click();return}
+  var r=await dialog('<h3>Ảnh đang sửa</h3><div class="dbtn" style="flex-direction:column"><button class="bt" data-r="home">Về trang chủ</button><button class="bt" data-r="go">Tiếp tục</button></div>');
+  if(r.v!=='home')return;
+  var cf=await dialog('<h3>Về trang chủ</h3><p>Ảnh đang sửa sẽ bị đóng. Hãy lưu trước nếu cần.</p><div class="dbtn"><button class="bt pri" data-r="1">Xác nhận</button><button class="bt" data-r="0">Bỏ qua</button></div>');
+  if(cf.v==='1')location.reload();
 });
 $('#fileMain').addEventListener('change',function(e){var f=e.target.files&&e.target.files[0];if(f)loadFile(f)});
 $('#fileRef').addEventListener('change',async function(e){
@@ -2525,6 +2520,81 @@ async function colSave(){
   }catch(e){busy(false);toast('Xuất ảnh lỗi: ảnh quá lớn hoặc hết bộ nhớ')}
 }
 $('#bCollage').addEventListener('click',openCollage);
+/* ===== Chụp ảnh trực tiếp, xem trước màu film ===== */
+var CAM={stream:null,facing:'environment',fc:0,fi:-1,t:1,raf:0,last:0,vid:null,off:null};
+function camHtml(){
+  var h='<div class="ct"><button class="bt sm" id="camX">Đóng</button><div class="ttl">Chụp ảnh</div><button class="bt sm" id="camFlip">Đổi camera</button></div><div class="vf"><canvas id="camV"></canvas></div><div class="cp"><div class="chips" id="camCat">';
+  FILM.forEach(function(c,i){h+='<button class="chip'+(CAM.fc===i?' on':'')+'" data-cc="'+i+'">'+esc(c.name)+'</button>'});
+  h+='</div><div class="chips" id="camStrip"><button class="chip'+(CAM.fi<0?' on':'')+'" data-cf="-1">Gốc</button>';
+  FILM[CAM.fc].list.forEach(function(p,i){h+='<button class="chip'+(CAM.fi===i&&CAM.fcSel===CAM.fc?' on':'')+'" data-cf="'+i+'">'+esc(p.name)+'</button>'});
+  h+='</div>';
+  if(CAM.fi>=0)h+='<div class="sl"><span class="sn">Mức độ</span><input type="range" id="camT" min="0" max="100" step="1" value="'+Math.round(CAM.t*50)+'"><b id="camTv">'+Math.round(CAM.t*50)+'</b></div>';
+  return h+'<div class="shot"><button id="camShot" aria-label="Chụp"></button></div></div>';
+}
+function camRender(){
+  var o=$('#camOv');if(!o)return;
+  var keepC=$('#camCat')?$('#camCat').scrollLeft:0;
+  o.innerHTML=camHtml();
+  $('#camCat').scrollLeft=keepC;
+  CAM.cv=$('#camV');
+  $('#camV').style.transform=CAM.facing==='user'?'scaleX(-1)':'none';
+}
+function camTick(ts){
+  CAM.raf=requestAnimationFrame(camTick);
+  var v=CAM.vid,cv=$('#camV');if(!v||!cv||!v.videoWidth||ts-CAM.last<60)return;
+  CAM.last=ts;
+  var sc=480/Math.max(v.videoWidth,v.videoHeight),w=Math.round(v.videoWidth*sc),h=Math.round(v.videoHeight*sc);
+  if(!CAM.off)CAM.off=document.createElement('canvas');
+  if(CAM.off.width!==w||CAM.off.height!==h){CAM.off.width=w;CAM.off.height=h}
+  if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h}
+  var x=CAM.off.getContext('2d',{willReadFrequently:true});x.drawImage(v,0,0,w,h);
+  var cx=cv.getContext('2d');
+  if(CAM.fi<0){cx.drawImage(CAM.off,0,0);return}
+  var id=x.getImageData(0,0,w,h),out=colorPass(id.data,w,h,combine({adj:defP().adj,film:{c:CAM.fcSel,i:CAM.fi,t:CAM.t}}),null);
+  cx.putImageData(new ImageData(out,w,h),0,0);
+}
+async function camStart(){
+  if(CAM.stream){CAM.stream.getTracks().forEach(function(t){t.stop()});CAM.stream=null}
+  CAM.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:CAM.facing},width:{ideal:1920},height:{ideal:1920}},audio:false});
+  var v=CAM.vid;v.srcObject=CAM.stream;await v.play();
+}
+async function openCam(){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$('#fileCam').value='';$('#fileCam').click();return}
+  CAM.fc=0;CAM.fi=-1;CAM.fcSel=0;CAM.t=1;
+  var o=document.createElement('div');o.id='camOv';document.body.appendChild(o);
+  var v=document.createElement('video');v.setAttribute('playsinline','');v.muted=true;CAM.vid=v;
+  camRender();
+  try{await camStart()}catch(e){closeCam();toast('Không mở được camera. Hãy cho phép truy cập camera, hoặc dùng ảnh chụp từ máy.');$('#fileCam').value='';$('#fileCam').click();return}
+  CAM.raf=requestAnimationFrame(camTick);
+  o.addEventListener('click',async function(e){
+    var b=e.target.closest('button');if(!b)return;
+    if(b.id==='camX')closeCam();
+    else if(b.id==='camFlip'){CAM.facing=CAM.facing==='user'?'environment':'user';try{await camStart();camRender()}catch(x){toast('Không đổi được camera')}}
+    else if(b.id==='camShot')camShot();
+    else if(b.hasAttribute('data-cc')){CAM.fc=+b.getAttribute('data-cc');camRender()}
+    else if(b.hasAttribute('data-cf')){
+      var i=+b.getAttribute('data-cf'),st=$('#camStrip'),L=st.scrollLeft,ix=Array.prototype.indexOf.call(st.children,b),D=(ix>=2&&b.nextElementSibling)?b.nextElementSibling.offsetLeft-b.offsetLeft:0;
+      if(i<0){CAM.fi=-1}else{CAM.fi=i;CAM.fcSel=CAM.fc}
+      camRender();
+      var s2=$('#camStrip');s2.scrollLeft=L;if(D)requestAnimationFrame(function(){try{s2.scrollTo({left:L+D,behavior:'smooth'})}catch(x){s2.scrollLeft=L+D}});
+    }
+  });
+  o.addEventListener('input',function(e){if(e.target.id==='camT'){CAM.t=+e.target.value/50;$('#camTv').textContent=e.target.value}});
+}
+function closeCam(){
+  cancelAnimationFrame(CAM.raf);
+  if(CAM.stream){CAM.stream.getTracks().forEach(function(t){t.stop()});CAM.stream=null}
+  var o=$('#camOv');if(o)o.remove();CAM.vid=null;
+}
+function camShot(){
+  var v=CAM.vid;if(!v||!v.videoWidth)return;
+  var w=v.videoWidth,h=v.videoHeight,sc=Math.min(1,LOCAL.maxEdge/Math.max(w,h)),c=cv(Math.round(w*sc),Math.round(h*sc));
+  c.getContext('2d').drawImage(v,0,0,c.width,c.height);
+  var f=CAM.fi>=0?{c:CAM.fcSel,i:CAM.fi,t:CAM.t}:null;
+  closeCam();
+  openCanvas(c);
+  if(f){doc.p.film=f;commit();modelChanged();refreshPanel()}
+}
 </script>
 </body>
 </html>
