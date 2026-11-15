@@ -44,6 +44,7 @@ input,select,textarea{font:inherit;font-size:16px;color:var(--tx)}
 #ov{pointer-events:none}
 #empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--ink);text-align:center;padding:24px}
 #empty svg.logo{width:104px;height:104px;filter:url(#wob)}
+#empty .bt{min-width:210px;font-size:17px;padding:13px 26px}
 #empty .big{background:var(--mint);color:var(--ink2);font-weight:700;font-size:17px;padding:13px 26px;border:1.8px solid var(--ink);border-radius:var(--wob)}
 #empty small{color:var(--mut);max-width:290px}
 #bFit{position:absolute;right:10px;bottom:10px;background:#fff;border:1.5px solid var(--ink);color:var(--ink2);border-radius:var(--wob);padding:6px 12px;font-size:13px}
@@ -158,13 +159,14 @@ select.sel,input.txt{width:100%;border:1.5px solid var(--ink);border-radius:var(
   </header>
   <div id="stageBox">
     <div id="zoom"><canvas id="view"></canvas><canvas id="ov"></canvas></div>
-    <div id="empty"><svg class="logo" viewBox="0 0 100 100" fill="none" stroke="#5B6B8C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="68" cy="30" r="12" fill="#F3D9A4"/><path d="M10 80 38 40l16 22 10-12 26 30z" fill="#A8D5C8"/><path d="M38 40l-9 13 9-3 7 8" stroke="#8CC0B0"/></svg><button class="big" id="bPick">Chọn ảnh</button><button class="bt" id="bCollage">Ghép nhiều ảnh</button><small>Ảnh được xử lý ngay trong máy, không gửi đi đâu. Giữ nút nửa tròn trên cùng để xem ảnh gốc.</small></div>
+    <div id="empty"><svg class="logo" viewBox="0 0 100 100" fill="none" stroke="#5B6B8C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="68" cy="30" r="12" fill="#F3D9A4"/><path d="M10 80 38 40l16 22 10-12 26 30z" fill="#A8D5C8"/><path d="M38 40l-9 13 9-3 7 8" stroke="#8CC0B0"/></svg><button class="bt" id="bCam">Chụp ảnh</button><button class="bt" id="bPick">Chọn ảnh</button><button class="bt" id="bCollage">Ghép nhiều ảnh</button><small>Ảnh được xử lý ngay trong máy, không gửi đi đâu. Giữ nút nửa tròn trên cùng để xem ảnh gốc.</small></div>
     <button id="bFit" hidden>⤢ Vừa khung</button>
   </div>
   <section id="panel"></section>
   <nav id="tabs"></nav>
 </div>
 <input type="file" id="fileMain" accept="image/*" hidden>
+<input type="file" id="fileCam" accept="image/*" capture="environment" hidden>
 <input type="file" id="fileRef" accept="image/*" hidden>
 <input type="file" id="fileLogo" accept="image/*" hidden>
 <input type="file" id="fileSets" accept="application/json,.json" hidden>
@@ -172,7 +174,7 @@ select.sel,input.txt{width:100%;border:1.5px solid var(--ink);border-radius:var(
 <div id="busy" hidden><div class="sp"></div><div id="busyMsg">Đang xử lý…</div><div class="pb"><div id="busyBar"></div></div></div>
 <script>
 'use strict';
-var APP_VER='3.11 (16/11/2026)';
+var APP_VER='3.12 (16/11/2026)';
 function $(s,r){return (r||document).querySelector(s)}
 function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
 function clamp(v,a,b){return v<a?a:(v>b?b:v)}
@@ -1492,7 +1494,7 @@ PANELS.film=function(){
   var f=doc.p.film,h='<div class="chips">';
   FILM.forEach(function(c,i){h+='<button class="chip'+(ui.fc===i?' on':'')+'" data-act="filmCat" data-v="'+i+'">'+c.name+'</button>'});
   h+='</div>';
-  if(f.i>=0)h+=rng('p.film.t','Mức độ',0,1,0.01,100,1);
+  if(f.i>=0)h+=rng('p.film.t','Mức độ',0,2,0.02,50,1);
   h+='<div class="chips" id="fstrip"><div class="th'+(f.i<0?' on':'')+'" data-act="filmPick" data-v="-1:-1"><img data-th="o" alt=""><span>Gốc</span></div>';
   FILM[ui.fc].list.forEach(function(p,i){h+='<div class="th'+(f.c===ui.fc&&f.i===i?' on':'')+'" data-act="filmPick" data-v="'+ui.fc+':'+i+'"><img data-th="'+ui.fc+':'+i+'" alt=""><span>'+esc(p.name)+'</span></div>'});
   h+='</div>';
@@ -1576,7 +1578,7 @@ PANELS.more=function(){
   if(ui.fxpv==null)ui.fxpv=50;
   if(txt){
     if(ui.ocrMsg)h+='<div class="hint" style="margin:2px 0">'+esc(ui.ocrMsg)+'</div>';
-    h+='<div class="row"><button class="bt sm'+(ui.ocrMode==='print'?' on':'')+'" data-act="ocrRun"'+(ui.ocrBusy?' disabled':'')+'>'+(ui.ocrBusy?'Đang đọc…':'Tự động')+'</button><button class="bt sm'+(ui.ocrMode==='hand'?' on':'')+'" data-act="ocrLive"'+(ui.ocrBusy?' disabled':'')+'>Thủ công</button><span style="flex:1;min-width:0;font-size:11px;line-height:1.3;color:var(--ink2);margin-left:4px">Scan có thể sai nội dung, bạn cần kiểm tra và sửa lại</span></div>';
+    h+='<div class="row"><button class="bt sm'+(ui.ocrMode==='print'?' on':'')+'" data-act="ocrRun"'+(ui.ocrBusy?' disabled':'')+'>'+(ui.ocrBusy?'Đang đọc…':'Tự động')+'</button><button class="bt sm'+(ui.ocrMode==='hand'?' on':'')+'" data-act="ocrLive"'+(ui.ocrBusy?' disabled':'')+'>Thủ công</button><span style="flex:1;min-width:0;font-size:11px;line-height:1.3;color:var(--ink2);margin-left:4px">Scan có thể sai nội dung, bạn cần kiểm tra và sửa lại.</span></div>';
   }
   if(!scan){
     h+='<div class="chips" id="xstrip" style="padding-top:9px">';
@@ -1776,7 +1778,13 @@ function refreshPanel(){
   if(!doc.base){p.hidden=false;p.innerHTML='<div class="hint" style="padding:10px 0;text-align:center">Chọn một ảnh để bắt đầu chỉnh sửa.</div>';return}
   p.hidden=ui.tab==='none';if(p.hidden)return;
   var fo=$('#fstrip')||$('#xstrip'),fid=fo?fo.id:'',key=ui.tab+'|'+ui.fc,keep=fo&&ui.fkey===key?fo.scrollLeft:0;
+  var gl=Array.prototype.map.call(p.querySelectorAll('.chips'),function(e){return e.scrollLeft}),gt=ui.gtab;
   p.innerHTML=PANELS[ui.tab]();p.scrollTop=st;fillThumbs();
+  Array.prototype.forEach.call(p.querySelectorAll('.chips'),function(e,i){
+    if(e.id==='fstrip'||e.id==='xstrip')return;
+    if(ui.gs&&ui.gs.tab===ui.tab&&ui.gs.ci===i){var L=ui.gs.left,D=ui.gs.d;e.scrollLeft=L;requestAnimationFrame(function(){try{e.scrollTo({left:L+D,behavior:'smooth'})}catch(x){e.scrollLeft=L+D}})}
+    else if(gt===ui.tab&&gl[i])e.scrollLeft=gl[i];
+  });ui.gs=null;ui.gtab=ui.tab;
   syncA4();
   var fn=$('#fstrip')||$('#xstrip');ui.fkey=ui.tab+'|'+ui.fc;
   if(fn){
@@ -2077,6 +2085,12 @@ panelEl.addEventListener('change',function(e){
 panelEl.addEventListener('click',function(e){
   var b=e.target.closest('[data-act]');if(!b||!doc.base)return;
   var fn=ACT[b.getAttribute('data-act')];if(!fn)return;
+  ui.gs=null;
+  var par=b.parentNode;
+  if(par&&par.classList&&par.classList.contains('chips')&&par.id!=='fstrip'&&par.id!=='xstrip'){
+    var ix=Array.prototype.indexOf.call(par.children,b);
+    if(ix>=2&&b.nextElementSibling)ui.gs={tab:ui.tab,ci:Array.prototype.indexOf.call(panelEl.querySelectorAll('.chips'),par),left:par.scrollLeft,d:b.nextElementSibling.offsetLeft-b.offsetLeft};
+  }
   var r=fn(b.getAttribute('data-v'),b);
   if(r!==false){refreshPanel();scheduleRender(true)}
 });
@@ -2187,6 +2201,27 @@ ACT.wmSaveDef=function(){var w=doc.p.wm;LOCAL.wm={on:w.on,text:w.text,logo:w.log
 
 /* ----- nhập ảnh, ảnh mẫu, logo ----- */
 $('#bPick').addEventListener('click',function(){$('#fileMain').value='';$('#fileMain').click()});
+$('#bCam').addEventListener('click',async function(){
+  var r=await dialog('<h3>Chụp ảnh</h3><div class="dbtn" style="flex-direction:column"><button class="bt" data-r="g">Gốc</button><button class="bt" data-r="f">Màu film</button></div><p style="font-size:12px;margin:8px 0 0;color:var(--mut)">Gốc: ảnh theo camera của máy. Màu film: thêm màu film vào ảnh vừa chụp.</p><div class="dbtn"><button class="bt" data-r="0">Bỏ qua</button></div>');
+  if(r.v==='0')return;
+  ui.camFilm=null;
+  if(r.v==='f'){
+    var r2=await dialog('<h3>Chọn màu film</h3><select class="sel" id="cfC">'+FILM.map(function(c,i){return '<option value="'+i+'">'+esc(c.name)+'</option>'}).join('')+'</select><select class="sel" id="cfF" style="margin-top:8px"></select><div class="dbtn"><button class="bt" data-r="0">Bỏ qua</button><button class="bt pri" data-r="1">Chụp</button></div>',function(m){
+      var C=m.querySelector('#cfC'),F=m.querySelector('#cfF');
+      function fill(){F.innerHTML=FILM[+C.value].list.map(function(p,i){return '<option value="'+i+'">'+esc(p.name)+'</option>'}).join('')}
+      C.addEventListener('change',fill);fill();
+    });
+    if(r2.v!=='1')return;
+    ui.camFilm={c:+r2.root.querySelector('#cfC').value,i:+r2.root.querySelector('#cfF').value};
+  }
+  $('#fileCam').value='';$('#fileCam').click();
+});
+$('#fileCam').addEventListener('change',async function(e){
+  var f=e.target.files&&e.target.files[0];if(!f)return;
+  await loadFile(f);
+  if(ui.camFilm&&doc.base){doc.p.film={c:ui.camFilm.c,i:ui.camFilm.i,t:1};commit();modelChanged();refreshPanel()}
+  ui.camFilm=null;
+});
 $('#bOpen').addEventListener('click',async function(){
   if(doc.base&&HI>0&&!(await askConfirm('Mở ảnh khác','Ảnh đang sửa sẽ bị đóng. Hãy lưu trước nếu cần.','Mở ảnh khác',false)))return;
   $('#fileMain').value='';$('#fileMain').click();
