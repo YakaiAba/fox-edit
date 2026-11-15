@@ -64,6 +64,11 @@ input,select,textarea{font:inherit;font-size:16px;color:var(--tx)}
 #xstrip{padding-top:9px}
 .chip.fxon{position:relative}
 .okb{margin-left:auto;width:38px;height:38px;border-radius:50%;background:var(--mint);border:2px solid var(--mintd);color:var(--ink2);font-size:22px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.okb.dim{opacity:.35}
+.sl .chip.sn{flex:0 0 auto;min-width:86px;text-align:center;padding:3px 8px}
+.sl .chip.sn.on{color:var(--ink2);font-weight:600}
+.sl.off input[type=range]{opacity:.4}
+.sl.off .rs{opacity:.3}
 .okb:active{background:var(--mintd)}
 .xb{position:absolute;top:-8px;right:-5px;width:17px;height:17px;border-radius:50%;background:var(--brick);color:#fff;font-size:11px;line-height:16px;text-align:center;border:1.5px solid #fff;font-weight:700}
 .chip.dot::after{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--sun);border:1.2px solid var(--ink);margin-left:5px;vertical-align:middle}
@@ -165,7 +170,7 @@ select.sel,input.txt{width:100%;border:1.5px solid var(--ink);border-radius:var(
 <div id="busy" hidden><div class="sp"></div><div id="busyMsg">Đang xử lý…</div><div class="pb"><div id="busyBar"></div></div></div>
 <script>
 'use strict';
-var APP_VER='2.6 (16/11/2026)';
+var APP_VER='2.8 (16/11/2026)';
 function $(s,r){return (r||document).querySelector(s)}
 function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
 function clamp(v,a,b){return v<a?a:(v>b?b:v)}
@@ -688,35 +693,39 @@ function skinTone(src,W,H,amt,mask){
   return out;
 }
 
-/* ===== Xóa bóng: ước lượng ánh sáng nền (bỏ chữ/chi tiết nhỏ) rồi cân bằng lại ===== */
+/* ===== Xóa bóng: ước lượng ánh sáng nền bằng phép "đóng" hình thái (giữ mép bóng gắt, bỏ chữ/nét mảnh), rồi chia lại từng kênh màu ===== */
 function shadeMap(src,W,H){
-  var B=Math.max(4,Math.round(Math.max(W,H)/150)),gw=Math.ceil(W/B),gh=Math.ceil(H/B),n=gw*gh,m=new Float32Array(n),x,y,i;
+  var B=Math.max(3,Math.round(Math.max(W,H)/260)),gw=Math.ceil(W/B),gh=Math.ceil(H/B),n=gw*gh,x,y,i,c;
+  var ch=[new Float32Array(n),new Float32Array(n),new Float32Array(n)];
   for(y=0;y<H;y++)for(x=0;x<W;x++){
-    var p=(y*W+x)*4,l=0.299*src[p]+0.587*src[p+1]+0.114*src[p+2],g=((y/B)|0)*gw+((x/B)|0);
-    if(l>m[g])m[g]=l;
+    var p=(y*W+x)*4,g=((y/B)|0)*gw+((x/B)|0);
+    for(c=0;c<3;c++)if(src[p+c]>ch[c][g])ch[c][g]=src[p+c];
   }
-  function mx(a,r){var t=new Float32Array(n),o=new Float32Array(n),k,v;
-    for(y=0;y<gh;y++)for(x=0;x<gw;x++){v=0;for(k=-r;k<=r;k++){var xx=Math.min(gw-1,Math.max(0,x+k)),q=a[y*gw+xx];if(q>v)v=q}t[y*gw+x]=v}
-    for(y=0;y<gh;y++)for(x=0;x<gw;x++){v=0;for(k=-r;k<=r;k++){var yy=Math.min(gh-1,Math.max(0,y+k)),q2=t[yy*gw+x];if(q2>v)v=q2}o[y*gw+x]=v}
+  function mm(a,r,mx){var t=new Float32Array(n),o=new Float32Array(n),k,v,q;
+    for(y=0;y<gh;y++)for(x=0;x<gw;x++){v=mx?0:999;for(k=-r;k<=r;k++){q=a[y*gw+Math.min(gw-1,Math.max(0,x+k))];if(mx?q>v:q<v)v=q}t[y*gw+x]=v}
+    for(y=0;y<gh;y++)for(x=0;x<gw;x++){v=mx?0:999;for(k=-r;k<=r;k++){q=t[Math.min(gh-1,Math.max(0,y+k))*gw+x];if(mx?q>v:q<v)v=q}o[y*gw+x]=v}
     return o}
-  function bl(a,r){var t=new Float32Array(n),o=new Float32Array(n),k,s,d=2*r+1;
-    for(y=0;y<gh;y++)for(x=0;x<gw;x++){s=0;for(k=-r;k<=r;k++)s+=a[y*gw+Math.min(gw-1,Math.max(0,x+k))];t[y*gw+x]=s/d}
-    for(y=0;y<gh;y++)for(x=0;x<gw;x++){s=0;for(k=-r;k<=r;k++)s+=t[Math.min(gh-1,Math.max(0,y+k))*gw+x];o[y*gw+x]=s/d}
+  function bl(a){var o=new Float32Array(n),dx,dy,sm;
+    for(y=0;y<gh;y++)for(x=0;x<gw;x++){sm=0;for(dy=-1;dy<=1;dy++)for(dx=-1;dx<=1;dx++)sm+=a[Math.min(gh-1,Math.max(0,y+dy))*gw+Math.min(gw-1,Math.max(0,x+dx))];o[y*gw+x]=sm/9}
     return o}
-  m=mx(m,2);m=bl(m,2);m=bl(m,2);
-  var srt=Array.prototype.slice.call(m).sort(function(a,b){return a-b}),ref=srt[Math.floor(n*0.9)]||255;
-  var g=new Float32Array(n);
-  for(i=0;i<n;i++)g[i]=Math.min(3.5,Math.max(1,ref/Math.max(20,m[i])));
-  return {B:B,gw:gw,gh:gh,g:g};
+  var r=3,g3=new Float32Array(n*3);
+  for(c=0;c<3;c++){
+    var bg=bl(mm(mm(ch[c],r,true),r,false));
+    var srt=Array.prototype.slice.call(bg).sort(function(a,b){return a-b}),ref=srt[Math.floor(n*0.9)]||255;
+    for(i=0;i<n;i++)g3[i*3+c]=Math.min(4,Math.max(1,ref/Math.max(25,bg[i])));
+  }
+  return {B:B,gw:gw,gh:gh,g:g3};
 }
 function shadeApply(src,W,H,amt,M){
-  var out=new Uint8ClampedArray(src),B=M.B,gw=M.gw,gh=M.gh,g=M.g,x,y;
+  var out=new Uint8ClampedArray(src),B=M.B,gw=M.gw,gh=M.gh,g=M.g,x,y,c;
   for(y=0;y<H;y++){
     var fy=y/B-0.5,y0=Math.max(0,Math.min(gh-1,Math.floor(fy))),y1=Math.min(gh-1,y0+1),ty=Math.min(1,Math.max(0,fy-y0));
     for(x=0;x<W;x++){
-      var fx2=x/B-0.5,x0=Math.max(0,Math.min(gw-1,Math.floor(fx2))),x1=Math.min(gw-1,x0+1),tx=Math.min(1,Math.max(0,fx2-x0));
-      var a=g[y0*gw+x0]*(1-tx)+g[y0*gw+x1]*tx,b=g[y1*gw+x0]*(1-tx)+g[y1*gw+x1]*tx,k=1+(a*(1-ty)+b*ty-1)*amt,i=(y*W+x)*4;
-      out[i]=src[i]*k;out[i+1]=src[i+1]*k;out[i+2]=src[i+2]*k;
+      var fx2=x/B-0.5,x0=Math.max(0,Math.min(gw-1,Math.floor(fx2))),x1=Math.min(gw-1,x0+1),tx=Math.min(1,Math.max(0,fx2-x0)),i=(y*W+x)*4;
+      for(c=0;c<3;c++){
+        var a=g[(y0*gw+x0)*3+c]*(1-tx)+g[(y0*gw+x1)*3+c]*tx,b=g[(y1*gw+x0)*3+c]*(1-tx)+g[(y1*gw+x1)*3+c]*tx;
+        out[i+c]=src[i+c]*(1+(a*(1-ty)+b*ty-1)*amt);
+      }
     }
   }
   return out;
@@ -1107,7 +1116,7 @@ function pipe(src,W,H,p,useCache){
   if(fxv.shade>0){
     var sk=doc.ver+'|'+W+'|'+H,sm;
     if(useCache&&c.sk===sk)sm=c.sm;else{sm=shadeMap(src,W,H);if(useCache){c.sk=sk;c.sm=sm}}
-    s=shadeApply(s,W,H,fxv.shade/100,sm);
+    s=shadeApply(s,W,H,Math.min(1,fxv.shade/100*1.5),sm);
   }
   var M=null;
   if(p.match&&p.match.on&&p.match.t>0)M=useCache?getMatch(p.match):buildMatch(p.match,targetStats());
@@ -1465,7 +1474,7 @@ PANELS.adj=function(){
   ADJ.forEach(function(x){var v=a[x[0]];h+='<button class="chip'+(ui.adj===x[0]?' on':'')+(v&&ui.adj!==x[0]?' dot':'')+'" data-act="adjSel" data-v="'+x[0]+'">'+x[1]+(v?'<b>'+(v>0&&!x[2]?'+':'')+v+'</b>':'')+'</button>'});
   h+='</div>';
   var cur=ADJ.filter(function(x){return x[0]===ui.adj})[0];
-  h+=rng('p.adj.'+cur[0],cur[1],cur[2]?0:-100,100,1,1,0);
+  h+=rng('p.adj.'+cur[0],'Mức độ',cur[2]?0:-100,100,1,1,0);
   h+='<div class="row"><button class="bt sm" data-act="auto">Tự động</button><button class="bt sm" data-act="adjReset">Đặt lại tất cả</button><button class="bt sm" data-act="setSave">＋ Lưu bộ chỉnh</button></div>';
   var sets=lsGet(K_SETS,[]);
   if(sets.length){
@@ -1479,7 +1488,7 @@ PANELS.film=function(){
   var f=doc.p.film,h='<div class="chips">';
   FILM.forEach(function(c,i){h+='<button class="chip'+(ui.fc===i?' on':'')+'" data-act="filmCat" data-v="'+i+'">'+c.name+'</button>'});
   h+='</div>';
-  if(f.i>=0)h+=rng('p.film.t','Cường độ',0,1,0.01,100,1);
+  if(f.i>=0)h+=rng('p.film.t','Mức độ',0,1,0.01,100,1);
   h+='<div class="chips" id="fstrip"><div class="th'+(f.i<0?' on':'')+'" data-act="filmPick" data-v="-1:-1"><img data-th="o" alt=""><span>Gốc</span></div>';
   FILM[ui.fc].list.forEach(function(p,i){h+='<div class="th'+(f.c===ui.fc&&f.i===i?' on':'')+'" data-act="filmPick" data-v="'+ui.fc+':'+i+'"><img data-th="'+ui.fc+':'+i+'" alt=""><span>'+esc(p.name)+'</span></div>'});
   h+='</div>';
@@ -1490,7 +1499,7 @@ PANELS.match=function(){
   if(!m)h+='<div class="hint">Chọn ảnh mẫu: ảnh đang sửa sẽ được đổi màu cho giống ảnh mẫu (tông màu, độ sáng, độ đậm nhạt).</div><div class="row"><button class="bt pri grow" data-act="refPick">Chọn ảnh mẫu</button></div>';
   else{
     h+='<div class="chips"><button class="chip'+(m.mode==='soft'?' on':'')+'" data-act="mmode" data-v="soft">Nhẹ, giữ chi tiết</button><button class="chip'+(m.mode==='hard'?' on':'')+'" data-act="mmode" data-v="hard">Mạnh, khớp sát</button></div>';
-    h+=rng('p.match.t','Mức khớp',0,1,0.01,100,1);
+    h+=rng('p.match.t','Mức độ',0,1,0.01,100,1);
     h+=chk('p.match.keepL','Giữ nguyên độ sáng của ảnh',m.keepL);
     h+='<div class="row"><button class="bt sm" data-act="refPick">Đổi ảnh mẫu</button><button class="bt sm" data-act="colSave">＋ Lưu màu này</button><button class="bt sm red" data-act="matchOff">Bỏ khớp</button></div>';
   }
@@ -1544,29 +1553,35 @@ PANELS.draw=function(){
   h+='<div class="hint">Vẽ bằng một ngón tay; hai ngón để phóng to, kéo. “Tẩy” chỉ xóa nét đã vẽ, không đụng đến ảnh.</div>';
   return h;
 };
+function brng(key,path,label,min,max,step,mul,def){
+  var on=ui.bsl===key,r=resolve(path),v=r?r.o[r.k]:0;
+  return '<div class="sl'+(on?'':' off')+'"><button class="chip sn'+(on?' on':'')+'" data-act="bsl" data-v="'+key+'">'+label+'</button><input type="range" data-p="'+path+'" data-m="'+mul+'" min="'+min+'" max="'+max+'" step="'+step+'" value="'+v+'"'+(on?'':' disabled')+'><b data-v="'+path+'">'+Math.round(v*mul*10)/10+'</b><button class="rs" data-act="reset" data-v="'+path+'" data-d="'+def+'" aria-label="Đặt lại"'+(on?'':' disabled')+'>↺</button></div>';
+}
+ACT.bsl=function(v){ui.bsl=ui.bsl===v?'':v};
 PANELS.beauty=function(){
   var b=doc.p.beauty,n=b.st.length;
   var h='<div class="chips">'+chipU('bmode','paint','<span class="brush"></span>Tô vùng',ui.bmode)+chipU('bmode','erase','Tẩy vùng tô',ui.bmode)+chipU('bmode','view','Xem kết quả',ui.bmode)+'</div>';
-  h+=rng('p.beauty.skin','Độ mịn da',0,100,1,1,60)+rng('p.beauty.tone','Đều màu da',0,100,1,1,0)+rng('u.bbrush','Cỡ bút',1,15,0.5,1,5);
+  h+=brng('skin','p.beauty.skin','Độ mịn da',0,100,1,1,60)+brng('tone','p.beauty.tone','Đều màu da',0,100,1,1,0)+brng('brush','u.bbrush','Cỡ bút',1,15,0.5,1,5);
   h+='<div class="row"><button class="bt sm" data-act="sundo"'+(n?'':' disabled')+'>Xóa nét cuối</button><button class="bt sm'+(ui.skinv?' pri':'')+'" data-act="skinv">Vùng da</button><button class="bt sm red" data-act="sclear"'+(n?'':' disabled')+'>Xóa hết vùng tô</button></div>';
   h+='<div class="hint">'+(ui.bmode==='view'?'Đang xem kết quả, vùng tô được ẩn. Hai ngón để phóng to, kéo để di chuyển.':'Tô vùng da để làm mịn. “Đều màu da” tự nhận biết da; bật “Vùng da” để xem, rồi “Tẩy vùng tô” để loại chỗ chọn sai (không tô thì áp cả ảnh). Vùng đã tô hiện màu gạch đỏ. Tránh tô mắt, môi, lông mày để giữ nét. Chọn “Xem kết quả” để kiểm tra.')+'</div>';
   return h;
 };
 var FXL=[['shade','Xóa bóng'],['burn','Cháy film'],['leak','Lóa sáng'],['glow','Glow'],['noise','Noise'],['vhs','VHS'],['dust','Bụi xước'],['rec','REC'],['date','Dấu ngày']];
 PANELS.more=function(){
-  var fx=doc.p.fx,h='<div class="chips" id="xstrip">',pv=!!ui.fxp&&ui.fxp===ui.fx;
+  var fx=doc.p.fx,h='<div class="chips" id="xstrip">',pv=!!ui.fxp&&ui.fxp===ui.fx,ap=fx[ui.fx]>0&&!pv;
   FXL.forEach(function(x){var on=fx[x[0]]>0;h+='<button class="chip'+(ui.fx===x[0]?' on':'')+(on?' fxon':'')+'" data-act="fxSel" data-v="'+x[0]+'">'+x[1]+(on?'<span class="xb" data-act="fxClr" data-v="'+x[0]+'">✕</span>':'')+'</button>'});
-  h+='</div>'+(pv?'':rng('p.fx.'+ui.fx,'Mức',0,100,1,1,0));
-  h+='<div class="row"><button class="bt sm" data-act="fxSeed">Đổi kiểu</button><button class="bt sm" data-act="fxOff">Tắt hết</button>'+(pv?'<button class="okb" data-act="fxOk" aria-label="Áp dụng hiệu ứng">✓</button>':'')+'</div>';
-  if(pv)h+='<div class="hint">Đang xem thử. Bấm ✓ để áp dụng vào ảnh, rồi chỉnh “Mức”. Bấm lại tên hiệu ứng để hủy.</div>';
-  else if(ui.fx==='shade')h+='<div class="hint">Xóa bóng đổ trên ảnh tài liệu, giúp nền sáng đều. Chụp thẳng, chữ tối trên nền sáng sẽ cho kết quả tốt nhất.</div>';
+  if(ui.fxpv==null)ui.fxpv=50;
+  h+='</div>'+(ap?rng('p.fx.'+ui.fx,'Mức độ',0,100,1,1,50):rng('u.fxpv','Mức độ',0,100,1,1,50));
+  h+='<div class="row"><button class="bt sm" data-act="fxSeed">Đổi kiểu</button><button class="bt sm" data-act="fxOff">Tắt hết</button><button class="okb'+(pv?'':' dim')+'" id="fxOkb" data-act="fxOk" aria-label="Áp dụng hiệu ứng">✓</button></div>';
+  h+='<div class="hint">'+(ap?'Hiệu ứng đang áp dụng. Bấm ✕ trên tên để bỏ.':(pv?'Đang xem thử. Bấm ✓ để áp dụng vào ảnh, bấm lại tên hiệu ứng để hủy.':(ui.fx==='shade'?'Xóa bóng đổ trên ảnh tài liệu, nền sáng đều hơn. Chọn hiệu ứng để xem thử, rồi bấm ✓.':'Chọn một hiệu ứng để xem thử, rồi bấm ✓.')))+'</div>';
   return h;
 };
 ACT.fxSel=function(v,el){
   var fx=doc.p.fx,strip=$('#xstrip');
-  if(strip&&el&&el.nextElementSibling)ui.fs={id:'xstrip',left:strip.scrollLeft,d:el.nextElementSibling.offsetLeft-el.offsetLeft};else ui.fs=null;
+  var idx=el?Array.prototype.indexOf.call(el.parentNode.children,el):0;
+  if(strip&&el&&idx>=2&&el.nextElementSibling)ui.fs={id:'xstrip',left:strip.scrollLeft,d:el.nextElementSibling.offsetLeft-el.offsetLeft};else ui.fs=null;
   if(ui.fxp===v){ui.fxp=null}
-  else{ui.fx=v;if(fx[v]>0)ui.fxp=null;else{ui.fxp=v;ui.fxpv=60}}
+  else{ui.fx=v;if(fx[v]>0)ui.fxp=null;else{ui.fxp=v;ui.fxpv=50}}
   modelChanged();
 };
 ACT.fxOk=function(){var k=ui.fxp;if(!k)return false;doc.p.fx[k]=ui.fxpv;ui.fxp=null;ui.fs=null;commit();modelChanged()};
@@ -1870,7 +1885,8 @@ function commitPath(path){
 }
 var panelEl=$('#panel');
 panelEl.addEventListener('input',function(e){
-  var t=e.target;if(t.getAttribute('data-p')==='t.text'){var ct=curText();if(ct&&ct.sample){ct.sample=0;if(t.value.indexOf('Nhập chữ')===0&&t.value.length>8)t.value=t.value.slice(8);else if(t.value.length>8&&t.value.slice(-8)==='Nhập chữ')t.value=t.value.slice(0,-8)}}
+  var t=e.target;if(t.getAttribute('data-p')==='u.fxpv'){if(!ui.fxp&&ui.fx&&!(doc.p.fx[ui.fx]>0)){ui.fxp=ui.fx;var ob=$('#fxOkb');if(ob)ob.classList.remove('dim')}}
+  if(t.getAttribute('data-p')==='t.text'){var ct=curText();if(ct&&ct.sample){ct.sample=0;if(t.value.indexOf('Nhập chữ')===0&&t.value.length>8)t.value=t.value.slice(8);else if(t.value.length>8&&t.value.slice(-8)==='Nhập chữ')t.value=t.value.slice(0,-8)}}
 },true);
 panelEl.addEventListener('focusin',function(e){var t=e.target,ct=t.getAttribute&&t.getAttribute('data-p')==='t.text'?curText():null;if(ct&&ct.sample)setTimeout(function(){t.select()},0)});
 panelEl.addEventListener('input',function(e){
@@ -1882,7 +1898,7 @@ panelEl.addEventListener('input',function(e){
   var lab=panelEl.querySelector('b[data-v="'+path+'"]');
   if(lab)lab.textContent=Math.round(v*Number(t.getAttribute('data-m')||1)*10)/10;
   if(!doc.base)return;
-  scheduleRender(/^(t|u|p\.frame|p\.wm)\./.test(path));
+  scheduleRender(/^(t|u(?!\.fxpv)|p\.frame|p\.wm)\./.test(path));
 });
 panelEl.addEventListener('change',function(e){
   var t=e.target,path=t.getAttribute('data-p');if(!path)return;
@@ -1939,7 +1955,8 @@ ACT.sclear=function(){if(!doc.p.beauty.st.length)return false;doc.p.beauty.st=[]
 ACT.filmCat=function(v){ui.fc=+v;ui.fs=null};
 ACT.filmPick=function(v,el){
   var a=v.split(':'),f=doc.p.film,strip=$('#fstrip');
-  if(strip&&el&&el.nextElementSibling)ui.fs={id:'fstrip',left:strip.scrollLeft,d:el.nextElementSibling.offsetLeft-el.offsetLeft};
+  var fi=el?Array.prototype.indexOf.call(el.parentNode.children,el):0;
+  if(strip&&el&&fi>=2&&el.nextElementSibling)ui.fs={id:'fstrip',left:strip.scrollLeft,d:el.nextElementSibling.offsetLeft-el.offsetLeft};
   else ui.fs=null;
   if(+a[1]<0){f.i=-1}else{f.c=+a[0];f.i=+a[1]}
   commit();modelChanged();
