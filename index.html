@@ -6,9 +6,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Fox-e">
+<meta name="apple-mobile-web-app-title" content="Fox-edit">
 <meta name="theme-color" content="#FBF9F4">
-<title>Fox-e</title>
+<title>Fox-edit</title>
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-512.png">
 <style>
@@ -141,7 +141,7 @@ select.sel,input.txt{width:100%;border:1.5px solid var(--ink);border-radius:var(
 <div id="app">
   <header id="top">
     <button class="ib" id="bOpen" aria-label="Mở ảnh khác"></button>
-    <div class="ttl">Fox-e</div>
+    <div class="ttl">Fox-edit</div>
     <span class="sp"></span>
     <button class="ib" id="bUndo" aria-label="Hoàn tác" disabled></button>
     <button class="ib" id="bRedo" aria-label="Làm lại" disabled></button>
@@ -165,7 +165,7 @@ select.sel,input.txt{width:100%;border:1.5px solid var(--ink);border-radius:var(
 <div id="busy" hidden><div class="sp"></div><div id="busyMsg">Đang xử lý…</div><div class="pb"><div id="busyBar"></div></div></div>
 <script>
 'use strict';
-var APP_VER='2.5 (16/11/2026)';
+var APP_VER='2.6 (16/11/2026)';
 function $(s,r){return (r||document).querySelector(s)}
 function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
 function clamp(v,a,b){return v<a?a:(v>b?b:v)}
@@ -2186,7 +2186,7 @@ function colPanel(){
     h+='<div class="row"><button class="bt sm" data-ca="pick">'+(c.img?'Đổi ảnh':'Chọn ảnh')+'</button>'+(c.img?'<button class="bt sm red" data-ca="clear">Bỏ ảnh</button>':'')+'</div>';
   }else h+='<div class="hint">Chạm vào một khung để chọn, chạm khung trống để thêm ảnh.</div>';
   h+='<div class="row"><button class="bt sm" data-ca="multi">Chọn nhiều ảnh cùng lúc</button></div></div>';
-  h+='<div class="row"><button class="bt pri grow" data-ca="edit">Chỉnh tiếp trong Fox-e</button></div>';
+  h+='<div class="row"><button class="bt pri grow" data-ca="edit">Chỉnh tiếp trong Fox-edit</button></div>';
   p.innerHTML=h;p.scrollTop=st;
 }
 function colRefresh(){colPanel();colDraw()}
