@@ -172,7 +172,7 @@ select.sel,input.txt{width:100%;border:1.5px solid var(--ink);border-radius:var(
 <div id="busy" hidden><div class="sp"></div><div id="busyMsg">Đang xử lý…</div><div class="pb"><div id="busyBar"></div></div></div>
 <script>
 'use strict';
-var APP_VER='3.9 (16/11/2026)';
+var APP_VER='3.10 (16/11/2026)';
 function $(s,r){return (r||document).querySelector(s)}
 function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
 function clamp(v,a,b){return v<a?a:(v>b?b:v)}
@@ -1675,7 +1675,7 @@ ACT.ocrLive=async function(){
   busy(false);
   var o=document.createElement('div');o.id='lvOv';
   o.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:90;background:#fff;-webkit-user-select:text;user-select:text;overflow:auto;-webkit-overflow-scrolling:touch';
-  o.innerHTML='<div style="position:sticky;top:0;z-index:2;background:#fff;padding:calc(env(safe-area-inset-top) + 8px) 12px 10px;border-bottom:1.8px solid var(--ink)"><div style="font-size:13px;line-height:1.5;color:var(--ink2);margin-bottom:10px"><b>1.</b> Nhấn giữ vào một chữ trên ảnh.<br><b>2.</b> Chọn “Chọn tất cả” rồi “Sao chép”.<br><b>3.</b> Bấm “Dán” để thêm vào trang A4.</div><div style="display:flex;gap:8px"><button class="bt sm" id="lvPaste">Dán</button><button class="bt sm" id="lvClose">Đóng</button></div></div><img alt="" style="display:block;width:100%;height:auto;-webkit-user-select:text;user-select:text;-webkit-touch-callout:default">';
+  o.innerHTML='<div style="position:sticky;top:0;z-index:2;background:#fff;padding:calc(env(safe-area-inset-top) + 8px) 12px 10px;border-bottom:1.8px solid var(--ink)"><div style="font-size:13px;line-height:1.5;color:var(--ink2);margin-bottom:10px">Nhấn giữ vào chữ trong ảnh, kéo chọn nội dung cần sử dụng rồi chọn “Sao chép”, sau đó chọn tính năng “Dán”.</div><div style="display:flex;gap:8px"><button class="bt sm" id="lvPaste">Dán</button><button class="bt sm" id="lvClose">Đóng</button></div></div><img alt="" style="display:block;width:100%;height:auto;-webkit-user-select:text;user-select:text;-webkit-touch-callout:default">';
   o.querySelector('img').src=c.toDataURL('image/jpeg',0.92);
   document.body.appendChild(o);
   o.querySelector('#lvClose').addEventListener('click',function(){o.remove()});
