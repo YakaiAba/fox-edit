@@ -164,7 +164,7 @@ select.sel,input.txt{width:100%;border:1.5px solid var(--ink);border-radius:var(
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="wob" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".05" numOctaves="2" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.4" xChannelSelector="R" yChannelSelector="G"/></filter></svg>
 <div id="app">
   <header id="top">
-    <button class="ib" id="bOpen" aria-label="Mở ảnh khác"></button>
+    <button class="ib" id="bOpen" aria-label="Về trang chủ"></button>
     <div class="ttl">Fox-edit</div>
     <span class="sp"></span>
     <button class="ib" id="bUndo" aria-label="Hoàn tác" disabled></button>
@@ -190,7 +190,7 @@ select.sel,input.txt{width:100%;border:1.5px solid var(--ink);border-radius:var(
 <div id="busy" hidden><div class="sp"></div><div id="busyMsg">Đang xử lý…</div><div class="pb"><div id="busyBar"></div></div></div>
 <script>
 'use strict';
-var APP_VER='3.16 (16/11/2026)';
+var APP_VER='3.17 (16/11/2026)';
 function $(s,r){return (r||document).querySelector(s)}
 function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
 function clamp(v,a,b){return v<a?a:(v>b?b:v)}
@@ -1423,7 +1423,7 @@ async function exportImage(fmt,q){
 var TABS=[['adj','adj','Chỉnh'],['film','film','Film'],['match','match','Mẫu'],['erase','erase','Xóa'],['beauty','beauty','Đẹp'],['draw','draw','Vẽ'],['text','text','Chữ'],['crop','crop','Cắt'],['frame','frame','Khung'],['more','more','Thêm']];
 var SUN='#F3D9A4',MINT='#A8D5C8';
 var ICONS={
-  plus:'<path d="M12 5v14M5 12h14"/>',
+  plus:'<path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/>',
   undo:'<path d="M9 6 4 11l5 5M4 11h10a5 5 0 0 1 0 10h-3"/>',
   redo:'<path d="M15 6l5 5-5 5M20 11H10a5 5 0 0 0 0 10h3"/>',
   cmp:'<circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="'+MINT+'"/>',
@@ -1611,6 +1611,7 @@ PANELS.more=function(){
   else h+='<button class="bt sm" data-act="a4Clear" style="flex:0 0 auto;margin-left:auto">Xóa hết</button><button class="okb" style="margin-left:0" data-act="a4Ok" aria-label="Xác nhận">✓</button>';
   return h+'</div>';
 };
+function ctrD(c,el){var a=c.getBoundingClientRect(),b=el.getBoundingClientRect();return (b.left+b.width/2)-(a.left+a.width/2)}
 function chipM(key,val,label){return '<button class="chip'+((ui[key]||(key==='mm'?'fx':'shade'))===val?' on':'')+'" data-act="'+(key==='mm'?'mmSel':'scanSel')+'" data-v="'+val+'">'+label+'</button>'}
 function dropPreview(){if(ui.fxp){ui.fxp=null;modelChanged()}}
 ACT.mmSel=function(v){ui.fxp=null;ui.mm=v;ui.fs=null;if(v==='scan'){ui.fx='shade';if(ui.scan!=='text'&&!(doc.p.fx.shade>0)){ui.fxp='shade';ui.fxpv=50}}else if(ui.fx==='shade')ui.fx='burn';modelChanged()};
@@ -1763,7 +1764,7 @@ ACT.a4Clear=function(){ui.ocrMode='';ui.a4open=false;ui.ocrText='';ui.ocrMsg='';
 ACT.fxSel=function(v,el){
   var fx=doc.p.fx,strip=$('#xstrip');
   var idx=el?Array.prototype.indexOf.call(el.parentNode.children,el):0;
-  if(strip&&el&&idx>=2&&el.nextElementSibling)ui.fs={id:'xstrip',left:strip.scrollLeft,d:el.nextElementSibling.offsetLeft-el.offsetLeft};else ui.fs=null;
+  if(strip&&el)ui.fs={id:'xstrip',left:strip.scrollLeft,d:ctrD(strip,el)};else ui.fs=null;
   if(ui.fxp===v){ui.fxp=null}
   else{ui.fx=v;if(fx[v]>0)ui.fxp=null;else{ui.fxp=v;ui.fxpv=50}}
   modelChanged();
@@ -1798,13 +1799,15 @@ function refreshPanel(){
   p.innerHTML=PANELS[ui.tab]();p.scrollTop=st;fillThumbs();
   Array.prototype.forEach.call(p.querySelectorAll('.chips'),function(e,i){
     if(e.id==='fstrip'||e.id==='xstrip')return;
-    if(ui.gs&&ui.gs.tab===ui.tab&&ui.gs.ci===i){var L=ui.gs.left,D=ui.gs.d;e.scrollLeft=L;requestAnimationFrame(function(){try{e.scrollTo({left:L+D,behavior:'smooth'})}catch(x){e.scrollLeft=L+D}})}
+    if(ui.gs&&ui.gs.tab===ui.tab&&ui.gs.ci===i){var L=ui.gs.left,D=ui.gs.d;ui.gk={tab:ui.tab,ci:i,left:Math.max(0,L+D)};clearTimeout(ui.gkT);ui.gkT=setTimeout(function(){ui.gk=null},900);e.scrollLeft=L;requestAnimationFrame(function(){try{e.scrollTo({left:L+D,behavior:'smooth'})}catch(x){e.scrollLeft=L+D}})}
+    else if(ui.gk&&ui.gk.tab===ui.tab&&ui.gk.ci===i)e.scrollLeft=ui.gk.left;
     else if(gt===ui.tab&&gl[i])e.scrollLeft=gl[i];
   });ui.gs=null;ui.gtab=ui.tab;
   syncA4();
   var fn=$('#fstrip')||$('#xstrip');ui.fkey=ui.tab+'|'+ui.fc;
   if(fn){
-    if(ui.fs&&ui.fs.id===fn.id){var L=ui.fs.left,d=ui.fs.d;ui.fs=null;fn.scrollLeft=L;requestAnimationFrame(function(){try{fn.scrollTo({left:L+d,behavior:'smooth'})}catch(e){fn.scrollLeft=L+d}})}
+    if(ui.fs&&ui.fs.id===fn.id){var L=ui.fs.left,d=ui.fs.d;ui.fs=null;ui.fk={id:fn.id,key:ui.fkey,left:Math.max(0,L+d)};clearTimeout(ui.fkT);ui.fkT=setTimeout(function(){ui.fk=null},900);fn.scrollLeft=L;requestAnimationFrame(function(){try{fn.scrollTo({left:L+d,behavior:'smooth'})}catch(e){fn.scrollLeft=L+d}})}
+    else if(ui.fk&&ui.fk.id===fn.id&&ui.fk.key===ui.fkey)fn.scrollLeft=ui.fk.left;
     else if(keep)fn.scrollLeft=keep;
   }
 }
@@ -2105,7 +2108,7 @@ panelEl.addEventListener('click',function(e){
   var par=b.parentNode;
   if(par&&par.classList&&par.classList.contains('chips')&&par.id!=='fstrip'&&par.id!=='xstrip'){
     var ix=Array.prototype.indexOf.call(par.children,b);
-    if(ix>=2&&b.nextElementSibling)ui.gs={tab:ui.tab,ci:Array.prototype.indexOf.call(panelEl.querySelectorAll('.chips'),par),left:par.scrollLeft,d:b.nextElementSibling.offsetLeft-b.offsetLeft};
+    ui.gs={tab:ui.tab,ci:Array.prototype.indexOf.call(panelEl.querySelectorAll('.chips'),par),left:par.scrollLeft,d:ctrD(par,b)};
   }
   var r=fn(b.getAttribute('data-v'),b);
   if(r!==false){refreshPanel();scheduleRender(true)}
@@ -2154,7 +2157,7 @@ ACT.filmCat=function(v){ui.fc=+v;ui.fs=null};
 ACT.filmPick=function(v,el){
   var a=v.split(':'),f=doc.p.film,strip=$('#fstrip');
   var fi=el?Array.prototype.indexOf.call(el.parentNode.children,el):0;
-  if(strip&&el&&fi>=2&&el.nextElementSibling)ui.fs={id:'fstrip',left:strip.scrollLeft,d:el.nextElementSibling.offsetLeft-el.offsetLeft};
+  if(strip&&el)ui.fs={id:'fstrip',left:strip.scrollLeft,d:ctrD(strip,el)};
   else ui.fs=null;
   if(+a[1]<0){f.i=-1}else{f.c=+a[0];f.i=+a[1]}
   commit();modelChanged();
@@ -2285,7 +2288,7 @@ $('#bSet').addEventListener('click',function(){
   dialog('<h3>Cài đặt</h3><h4>Cạnh dài tối đa khi mở ảnh</h4><div class="chips" id="meChips">'+[2048,3000,4096].map(function(v){return '<button class="chip'+(me===v?' on':'')+'" data-e="'+v+'">'+v+' px</button>'}).join('')+'</div>'+
     '<p class="hint">Áp dụng cho ảnh mở sau này. Ảnh càng lớn càng nặng máy; 3000 px là mức cân bằng cho iPhone.</p>'+
     '<h4>Bộ chỉnh riêng và màu mẫu</h4><div class="row"><button class="bt sm" data-r="exp">Xuất ra file</button><button class="bt sm" data-r="imp">Nhập từ file</button></div>'+
-    '<h4>Chụp ảnh</h4><p class="hint">Khi chụp, iPhone tự hiện biểu tượng quay phim màu đỏ ở góc trái trên cùng và chấm xanh ở góc phải. Đó là chỉ báo của hệ thống iOS mỗi khi một ứng dụng dùng camera, app không bỏ được. Chúng tự tắt khi bạn thoát khỏi màn hình chụp.</p>'+
+    '<h4>Chụp ảnh</h4><p class="hint">Lưu ý: khi chụp, thiết bị tự hiện biểu tượng quay phim màu đỏ ở góc trái trên và chấm xanh ở góc phải. Đó là chỉ báo của hệ thống khi một ứng dụng dùng camera. Ứng dụng này không bỏ được, và chúng tự tắt khi thoát màn hình chụp.</p>'+
     '<p class="ver">Phiên bản '+APP_VER+'<br>'+diagInfo()+'</p><div class="dbtn"><button class="bt pri" data-r="ok">Xong</button></div>',
     function(m){m.addEventListener('click',function(e){var c=e.target.closest('[data-e]');if(c){me=Number(c.getAttribute('data-e'));$$('#meChips .chip',m).forEach(function(x){x.classList.toggle('on',x===c)})}})}
   ).then(async function(r){
@@ -2539,7 +2542,7 @@ function camHtml(){
 }
 function camFit(){
   var vf=$('#camOv .vf'),bx=$('#camBox');if(!vf||!bx)return;
-  var w=vf.clientWidth,h=vf.clientHeight,bh=Math.min(h,w*1.5),bw=bh/1.5;
+  var w=vf.clientWidth,h=vf.clientHeight,bh=Math.min(h,w*4/3),bw=bh*3/4;
   bx.style.width=bw+'px';bx.style.height=bh+'px';
 }
 window.addEventListener('resize',camFit);
@@ -2551,12 +2554,12 @@ function camRender(){
   CAM.cv=$('#camV');camFit();
   $('#camV').style.transform=CAM.facing==='user'?'scaleX(-1)':'none';
 }
-function camCrop(v){var vw=v.videoWidth,vh=v.videoHeight,sw=Math.min(vw,vh*2/3),sh=sw*1.5;return [(vw-sw)/2,(vh-sh)/2,sw,sh]}
+function camCrop(v){var vw=v.videoWidth,vh=v.videoHeight,sw=Math.min(vw,vh*3/4),sh=sw*4/3;return [(vw-sw)/2,(vh-sh)/2,sw,sh]}
 function camTick(ts){
   CAM.raf=requestAnimationFrame(camTick);
   var v=CAM.vid,cv=$('#camV');if(!v||!cv||!v.videoWidth||ts-CAM.last<60)return;
   CAM.last=ts;
-  var cr=camCrop(v),w=320,h=480;
+  var cr=camCrop(v),w=360,h=480;
   if(!CAM.off)CAM.off=document.createElement('canvas');
   if(CAM.off.width!==w||CAM.off.height!==h){CAM.off.width=w;CAM.off.height=h}
   if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h}
@@ -2587,9 +2590,9 @@ async function openCam(){
     else if(b.id==='camGr'){CAM.grid=!CAM.grid;camRender()}
     else if(b.id==='camAlbum'){closeCam();$('#fileMain').value='';$('#fileMain').click()}
     else if(b.id==='camRs'){CAM.t=1;camRender()}
-    else if(b.hasAttribute('data-cc')){CAM.fc=+b.getAttribute('data-cc');camRender()}
+    else if(b.hasAttribute('data-cc')){var cc=$('#camCat'),L0=cc.scrollLeft,D0=ctrD(cc,b);CAM.fc=+b.getAttribute('data-cc');camRender();var c2=$('#camCat');c2.scrollLeft=L0;requestAnimationFrame(function(){try{c2.scrollTo({left:L0+D0,behavior:'smooth'})}catch(x){c2.scrollLeft=L0+D0}})}
     else if(b.hasAttribute('data-cf')){
-      var i=+b.getAttribute('data-cf'),st=$('#camStrip'),L=st.scrollLeft,ix=Array.prototype.indexOf.call(st.children,b),D=(ix>=2&&b.nextElementSibling)?b.nextElementSibling.offsetLeft-b.offsetLeft:0;
+      var i=+b.getAttribute('data-cf'),st=$('#camStrip'),L=st.scrollLeft,D=ctrD(st,b);
       if(i<0){CAM.fi=-1}else{CAM.fi=i;CAM.fcSel=CAM.fc}
       camRender();
       var s2=$('#camStrip');s2.scrollLeft=L;if(D)requestAnimationFrame(function(){try{s2.scrollTo({left:L+D,behavior:'smooth'})}catch(x){s2.scrollLeft=L+D}});
@@ -2618,7 +2621,16 @@ async function camShot(){
     var blob=await new Promise(function(r){c.toBlob(r,'image/jpeg',LOCAL.q||0.92)});
     var file=new File([blob],'Fox-'+Date.now()+'.jpg',{type:'image/jpeg'});
     if(navigator.canShare&&navigator.canShare({files:[file]})){
-      try{await navigator.share({files:[file]})}catch(e){if(e&&e.name!=='AbortError')throw e}
+      try{await navigator.share({files:[file]})}catch(e){
+        if(e&&e.name==='AbortError'){}
+        else{
+          var url=URL.createObjectURL(blob);
+          await dialog('<h3>Lưu ảnh vào máy</h3><img src="'+url+'" style="width:100%;border-radius:8px;display:block" alt=""><p class="hint" style="margin-top:8px">Bấm “Lưu vào máy” rồi chọn “Lưu ảnh”, hoặc nhấn giữ ảnh và chọn “Thêm vào Ảnh”.</p><div class="dbtn"><button class="bt" data-r="0">Bỏ qua</button><button class="bt pri" data-r="1" id="camSv">Lưu vào máy</button></div>',function(m){
+            m.querySelector('#camSv').addEventListener('click',function(){try{navigator.share({files:[file]})}catch(x){}})
+          });
+          URL.revokeObjectURL(url);
+        }
+      }
     }else{
       var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=file.name;document.body.appendChild(a);a.click();a.remove();
       setTimeout(function(){URL.revokeObjectURL(a.href)},4000);
