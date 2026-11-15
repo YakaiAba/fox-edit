@@ -191,7 +191,7 @@ select.sel,input.txt{width:100%;border:1.5px solid var(--ink);border-radius:var(
 <div id="busy" hidden><div class="sp"></div><div id="busyMsg">Đang xử lý…</div><div class="pb"><div id="busyBar"></div></div></div>
 <script>
 'use strict';
-var APP_VER='3.19 (16/11/2026)';
+var APP_VER='3.20 (16/11/2026)';
 function $(s,r){return (r||document).querySelector(s)}
 function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
 function clamp(v,a,b){return v<a?a:(v>b?b:v)}
@@ -2287,7 +2287,7 @@ function diagInfo(){
 $('#bSet').addEventListener('click',function(){
   var me=LOCAL.maxEdge;
   dialog('<h3>Cài đặt</h3><h4>Cạnh dài tối đa khi mở ảnh</h4><div class="chips" id="meChips">'+[2048,3000,4096].map(function(v){return '<button class="chip'+(me===v?' on':'')+'" data-e="'+v+'">'+v+' px</button>'}).join('')+'</div>'+
-    '<p class="hint">Áp dụng cho ảnh mở sau này. Ảnh càng lớn càng nặng máy; 3000 px là mức cân bằng cho iPhone.</p>'+
+    '<p class="note">Áp dụng cho ảnh mở sau này. Ảnh càng lớn càng nặng máy; 3000 px là mức cân bằng cho iPhone.</p>'+
     '<h4>Bộ chỉnh riêng và màu mẫu</h4><div class="row"><button class="bt sm" data-r="exp">Xuất ra file</button><button class="bt sm" data-r="imp">Nhập từ file</button></div>'+
     '<h4>Lưu ý</h4><p class="note">Khi chụp, thiết bị tự hiện biểu tượng quay phim màu đỏ ở góc trái trên và chấm xanh ở góc phải. Đó là chỉ báo của hệ thống khi một ứng dụng dùng camera. Ứng dụng này không bỏ được, và chúng tự tắt khi thoát màn hình chụp.</p>'+
     '<p class="ver">Phiên bản '+APP_VER+'<br>'+diagInfo()+'</p><div class="dbtn"><button class="bt pri" data-r="ok">Thoát</button></div>',
