@@ -172,7 +172,7 @@ select.sel,input.txt{width:100%;border:1.5px solid var(--ink);border-radius:var(
 <div id="busy" hidden><div class="sp"></div><div id="busyMsg">Đang xử lý…</div><div class="pb"><div id="busyBar"></div></div></div>
 <script>
 'use strict';
-var APP_VER='3.6 (16/11/2026)';
+var APP_VER='3.7 (16/11/2026)';
 function $(s,r){return (r||document).querySelector(s)}
 function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
 function clamp(v,a,b){return v<a?a:(v>b?b:v)}
@@ -1675,7 +1675,7 @@ ACT.ocrLive=async function(){
   busy(false);
   var o=document.createElement('div');o.id='lvOv';
   o.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:90;background:#fff;overflow:auto;-webkit-overflow-scrolling:touch';
-  o.innerHTML='<div style="position:sticky;top:0;z-index:2;background:#fff;padding:calc(env(safe-area-inset-top) + 8px) 10px 8px;border-bottom:1.8px solid var(--ink);display:flex;gap:8px;align-items:center"><span style="flex:1;font-size:12.5px;line-height:1.3;color:var(--ink2)">Bấm “Chọn tất cả” để lấy toàn bộ chữ trên ảnh, hoặc nhấn giữ vào chữ, chọn rồi Sao chép và bấm “Dán”.</span><button class="bt sm" id="lvAll">Chọn tất cả</button><button class="bt sm pri" id="lvPaste">Dán</button><button class="bt sm" id="lvClose">Đóng</button></div><img alt="" style="display:block;width:100%;height:auto;-webkit-user-select:text;user-select:text;-webkit-touch-callout:default">';
+  o.innerHTML='<div style="position:sticky;top:0;z-index:2;background:#fff;padding:calc(env(safe-area-inset-top) + 8px) 12px 10px;border-bottom:1.8px solid var(--ink)"><div style="font-size:13px;line-height:1.45;color:var(--ink2);margin-bottom:10px">“Chọn tất cả” để lấy tất cả chữ trên ảnh và tự động thêm vào trang A4.<br>Hoặc nhấn giữ vào chữ trên ảnh cần chọn và sao chép, rồi “Dán” để thêm vào trang A4.</div><div style="display:flex;gap:8px"><button class="bt sm" id="lvAll">Chọn tất cả</button><button class="bt sm" id="lvPaste">Dán</button><button class="bt sm" id="lvClose">Đóng</button></div></div><img alt="" style="display:block;width:100%;height:auto;-webkit-user-select:text;user-select:text;-webkit-touch-callout:default">';
   o.querySelector('img').src=c.toDataURL('image/jpeg',0.92);
   document.body.appendChild(o);
   o.querySelector('#lvAll').addEventListener('click',async function(){
