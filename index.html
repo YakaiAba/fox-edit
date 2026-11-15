@@ -65,6 +65,7 @@ input,select,textarea{font:inherit;font-size:16px;color:var(--tx)}
 .chip.fxon{position:relative}
 .okb{margin-left:auto;width:38px;height:38px;border-radius:50%;background:var(--mint);border:2px solid var(--mintd);color:var(--ink2);font-size:22px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
 .okb.dim{opacity:.35}
+.chips .okb{width:34px;height:34px;font-size:19px;margin-left:auto}
 .sl .chip.sn{flex:0 0 auto;min-width:86px;text-align:center;padding:3px 8px}
 .sl .chip.sn.on{color:var(--ink2);font-weight:600}
 .sl.off input[type=range]{opacity:.4}
@@ -170,7 +171,7 @@ select.sel,input.txt{width:100%;border:1.5px solid var(--ink);border-radius:var(
 <div id="busy" hidden><div class="sp"></div><div id="busyMsg">Đang xử lý…</div><div class="pb"><div id="busyBar"></div></div></div>
 <script>
 'use strict';
-var APP_VER='3.1 (16/11/2026)';
+var APP_VER='3.3 (16/11/2026)';
 function $(s,r){return (r||document).querySelector(s)}
 function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
 function clamp(v,a,b){return v<a?a:(v>b?b:v)}
@@ -1569,32 +1570,31 @@ PANELS.beauty=function(){
   return h;
 };
 var FXL=[['shade','Xóa bóng'],['burn','Cháy film'],['leak','Lóa sáng'],['glow','Glow'],['noise','Noise'],['vhs','VHS'],['dust','Bụi xước'],['rec','REC'],['date','Dấu ngày']];
-function fxPanel(list,scan){
-  var fx=doc.p.fx,h='',pv=!!ui.fxp&&ui.fxp===ui.fx,ap=fx[ui.fx]>0&&!pv;
-  if(!scan){h='<div class="chips" id="xstrip">';list.forEach(function(x){var on=fx[x[0]]>0;h+='<button class="chip'+(ui.fx===x[0]?' on':'')+(on?' fxon':'')+'" data-act="fxSel" data-v="'+x[0]+'">'+x[1]+(on?'<span class="xb" data-act="fxClr" data-v="'+x[0]+'">✕</span>':'')+'</button>'});h+='</div>'}
-  if(ui.fxpv==null)ui.fxpv=50;
-  h+=(ap?rng('p.fx.'+ui.fx,'Mức độ',0,100,1,1,50):rng('u.fxpv','Mức độ',0,100,1,1,50));
-  h+='<div class="row">'+(scan?'':'<button class="bt sm" data-act="fxSeed">Đổi kiểu</button><button class="bt sm" data-act="fxOff">Tắt hết</button>')+'<button class="okb'+(pv?'':' dim')+'" id="fxOkb" data-act="fxOk" aria-label="Áp dụng">✓</button></div>';
-  h+='<div class="hint">'+(ap?'Đang áp dụng. Bấm ✕ trên tên để bỏ.':(pv?'Đang xem thử, chưa áp dụng. Bấm ✓ để áp dụng vào ảnh, bấm lại tên để hủy.':(scan?'Xóa bóng đổ trên ảnh tài liệu, nền giấy sáng đều. Chọn để xem thử, rồi bấm ✓.':'Chọn một hiệu ứng để xem thử, rồi bấm ✓.')))+'</div>';
-  return h;
-}
 PANELS.more=function(){
-  var h='<div class="chips">'+chipM('mm','fx','Hiệu ứng')+chipM('mm','scan','Scan')+'</div>';
-  if(ui.mm!=='scan')return h+fxPanel(FXL.filter(function(x){return x[0]!=='shade'}),false);
-  var sh=doc.p.fx.shade>0;
-  h+='<div class="chips" style="padding-top:9px"><button class="chip'+(ui.scan!=='text'?' on':'')+(sh?' fxon':'')+'" data-act="scanSel" data-v="shade">Xóa bóng'+(sh?'<span class="xb" data-act="fxClr" data-v="shade">✕</span>':'')+'</button>'+chipM('scan','text','Văn bản')+'</div>';
-  if(ui.scan==='text'){
-    h+=rng('u.ocrSize','Mức độ',0,100,1,1,50);
-    h+='<div class="row"><button class="bt sm" data-act="ocrRun"'+(ui.ocrBusy?' disabled':'')+'>'+(ui.ocrBusy?'Đang nhận dạng…':'Nhận dạng chữ')+'</button><button class="bt sm pri" data-act="ocrPage"'+(ui.ocrBusy?' disabled':'')+'>Tạo trang A4</button><button class="bt sm" data-act="ocrCopy">Sao chép</button></div>';
-    h+='<textarea class="tx" id="ocrOut" style="height:80px" placeholder="Chữ nhận dạng hiện ở đây, có thể sửa trực tiếp trước khi tạo trang A4.">'+esc(ui.ocrText||'')+'</textarea>';
-    h+='<div class="hint">'+(ui.ocrMsg||'Mức độ = cỡ chữ trên trang A4. Ảnh dọc ra A4 dọc, ảnh ngang ra A4 ngang. Chữ in nhận tốt, chữ viết tay thường sai nhiều. Lần đầu cần mạng (tải khoảng 1,4 MB).')+'</div>';
-    return h;
+  var scan=ui.mm==='scan',txt=scan&&ui.scan==='text',fx=doc.p.fx,pv=!!ui.fxp&&ui.fxp===ui.fx,ap=fx[ui.fx]>0&&!pv,h='';
+  if(ui.fxpv==null)ui.fxpv=50;
+  if(txt){
+    if(ui.ocrMsg)h+='<div class="hint" style="margin:2px 0">'+esc(ui.ocrMsg)+'</div>';
+    h+='<textarea class="tx" id="ocrOut" style="height:60px" placeholder="Chữ nhận dạng hiện ở đây, có thể sửa trực tiếp. Mức độ = cỡ chữ trên trang A4.">'+esc(ui.ocrText||'')+'</textarea>';
+    h+='<div class="row"><button class="bt sm" data-act="ocrRun"'+(ui.ocrBusy?' disabled':'')+'>'+(ui.ocrBusy?'Đang đọc…':'Đọc chữ in')+'</button><button class="bt sm" data-act="ocrLive">Đọc viết tay</button><button class="bt sm pri" data-act="ocrPage"'+(ui.ocrBusy?' disabled':'')+'>Tạo trang A4</button></div>';
   }
-  return h+fxPanel([FXL[0]],true);
+  if(!scan){
+    h+='<div class="chips" id="xstrip" style="padding-top:9px">';
+    FXL.filter(function(x){return x[0]!=='shade'}).forEach(function(x){var on=fx[x[0]]>0;h+='<button class="chip'+(ui.fx===x[0]&&(ui.fxp===x[0]||on)?' on':'')+(on?' fxon':'')+'" data-act="fxSel" data-v="'+x[0]+'">'+x[1]+(on?'<span class="xb" data-act="fxClr" data-v="'+x[0]+'">✕</span>':'')+'</button>'});
+    h+='</div>';
+  }else{
+    var sh=fx.shade>0;
+    h+='<div class="chips" style="padding-top:9px"><button class="chip'+(!txt?' on':'')+(sh?' fxon':'')+'" data-act="scanSel" data-v="shade">Xóa bóng'+(sh?'<span class="xb" data-act="fxClr" data-v="shade">✕</span>':'')+'</button>'+chipM('scan','text','Văn bản')+'</div>';
+  }
+  h+=txt?rng('u.ocrSize','Mức độ',0,100,1,1,50):(ap?rng('p.fx.'+ui.fx,'Mức độ',0,100,1,1,50):rng('u.fxpv','Mức độ',0,100,1,1,50));
+  h+='<div class="chips">'+chipM('mm','fx','Hiệu ứng')+chipM('mm','scan','Scan');
+  if(!scan)h+='<button class="bt sm" data-act="fxSeed" style="flex:0 0 auto">Đổi kiểu</button><button class="bt sm" data-act="fxOff" style="flex:0 0 auto">Tắt hết</button>';
+  if(!txt)h+='<button class="okb'+(pv?'':' dim')+'" id="fxOkb" data-act="fxOk" aria-label="Áp dụng">✓</button>';
+  return h+'</div>';
 };
 function chipM(key,val,label){return '<button class="chip'+((ui[key]||(key==='mm'?'fx':'shade'))===val?' on':'')+'" data-act="'+(key==='mm'?'mmSel':'scanSel')+'" data-v="'+val+'">'+label+'</button>'}
 function dropPreview(){if(ui.fxp){ui.fxp=null;modelChanged()}}
-ACT.mmSel=function(v){dropPreview();ui.mm=v;ui.fs=null;if(v==='scan')ui.fx='shade';else if(ui.fx==='shade')ui.fx='burn'};
+ACT.mmSel=function(v){ui.fxp=null;ui.mm=v;ui.fs=null;if(v==='scan'){ui.fx='shade';if(ui.scan!=='text'&&!(doc.p.fx.shade>0)){ui.fxp='shade';ui.fxpv=50}}else if(ui.fx==='shade')ui.fx='burn';modelChanged()};
 ACT.scanSel=function(v){ui.fs=null;if(v==='shade'){var was=ui.scan!=='text'&&ui.fxp==='shade';ui.scan='shade';ui.fx='shade';if(was)ui.fxp=null;else if(!(doc.p.fx.shade>0)){ui.fxp='shade';ui.fxpv=50}else ui.fxp=null;modelChanged()}else{dropPreview();ui.scan=v}};
 var OCRJS=null;
 function loadOcr(){
@@ -1609,11 +1609,7 @@ ACT.ocrRun=async function(){
   var worker=null;
   try{
     await loadOcr();
-    var fc=await buildFinal(),k=Math.min(1,2200/Math.max(fc.width,fc.height)),w=Math.round(fc.width*k),h=Math.round(fc.height*k),c=cv(w,h),x=c.getContext('2d');
-    x.drawImage(fc,0,0,w,h);
-    var id=x.getImageData(0,0,w,h),d=id.data,M=shadeMap(d,w,h),o=shadeApply(d,w,h,1,M);
-    for(var i=0;i<o.length;i+=4){var g=0.299*o[i]+0.587*o[i+1]+0.114*o[i+2];o[i]=o[i+1]=o[i+2]=g;o[i+3]=255}
-    x.putImageData(new ImageData(o,w,h),0,0);
+    var c=await cleanScan();
     worker=await Tesseract.createWorker('vie',1,{langPath:'https://cdn.jsdelivr.net/npm/@tesseract.js-data/vie/4.0.0_best_int',logger:function(m){if(m.status){ui.ocrMsg=(m.status==='recognizing text'?'Đang nhận dạng ':'Đang tải dữ liệu ')+Math.round((m.progress||0)*100)+'%';var hn=panelEl.querySelector('.hint');if(hn&&ui.tab==='more')hn.textContent=ui.ocrMsg}}});
     var r=await worker.recognize(c);
     ui.ocrText=(r.data.text||'').replace(/\n{3,}/g,'\n\n').trim();
@@ -1625,6 +1621,32 @@ ACT.ocrRun=async function(){
 ACT.ocrCopy=async function(){
   var t=$('#ocrOut');t=t?t.value:(ui.ocrText||'');if(!t){toast('Chưa có chữ để sao chép');return false}
   try{await navigator.clipboard.writeText(t);toast('Đã sao chép')}catch(e){var ta=$('#ocrOut');if(ta){ta.select();document.execCommand('copy');toast('Đã sao chép')}}
+  return false;
+};
+function cleanScan(){
+  return buildFinal().then(function(fc){
+    var k=Math.min(1,2200/Math.max(fc.width,fc.height)),w=Math.round(fc.width*k),h=Math.round(fc.height*k),c=cv(w,h),x=c.getContext('2d');
+    x.drawImage(fc,0,0,w,h);
+    var id=x.getImageData(0,0,w,h),d=id.data,M=shadeMap(d,w,h),o=shadeApply(d,w,h,1,M);
+    for(var i=0;i<o.length;i+=4){var g=0.299*o[i]+0.587*o[i+1]+0.114*o[i+2];o[i]=o[i+1]=o[i+2]=g;o[i+3]=255}
+    x.putImageData(new ImageData(o,w,h),0,0);return c;
+  });
+}
+ACT.ocrLive=async function(){
+  if(!doc.base)return false;
+  busy(true,'Đang làm sạch ảnh…');await nextFrame();
+  var c;try{c=await cleanScan()}catch(e){busy(false);toast('Không xử lý được ảnh');return false}
+  busy(false);
+  var o=document.createElement('div');o.id='lvOv';
+  o.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:90;background:#fff;overflow:auto;-webkit-overflow-scrolling:touch';
+  o.innerHTML='<div style="position:sticky;top:0;z-index:2;background:#fff;padding:calc(env(safe-area-inset-top) + 8px) 10px 8px;border-bottom:1.8px solid var(--ink);display:flex;gap:8px;align-items:center"><span style="flex:1;font-size:12.5px;line-height:1.3;color:var(--ink2)">Nhấn giữ vào chữ trong ảnh, chọn tất cả rồi Sao chép. Sau đó bấm “Dán”.</span><button class="bt sm pri" id="lvPaste">Dán</button><button class="bt sm" id="lvClose">Đóng</button></div><img alt="" style="display:block;width:100%;height:auto;-webkit-user-select:text;user-select:text;-webkit-touch-callout:default">';
+  o.querySelector('img').src=c.toDataURL('image/jpeg',0.92);
+  document.body.appendChild(o);
+  o.querySelector('#lvClose').addEventListener('click',function(){o.remove()});
+  o.querySelector('#lvPaste').addEventListener('click',async function(){
+    try{var t=await navigator.clipboard.readText();if(!t||!t.trim()){toast('Chưa có chữ nào được sao chép');return}ui.ocrText=t.trim();ui.ocrMsg='Đã dán chữ. Bạn sửa lại nếu cần rồi bấm Tạo trang A4.';o.remove();refreshPanel()}
+    catch(e){toast('Không đọc được bộ nhớ tạm. Hãy dán thủ công vào ô văn bản')}
+  });
   return false;
 };
 ACT.ocrPage=async function(){
