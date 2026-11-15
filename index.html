@@ -172,7 +172,7 @@ select.sel,input.txt{width:100%;border:1.5px solid var(--ink);border-radius:var(
 <div id="busy" hidden><div class="sp"></div><div id="busyMsg">Đang xử lý…</div><div class="pb"><div id="busyBar"></div></div></div>
 <script>
 'use strict';
-var APP_VER='3.10 (16/11/2026)';
+var APP_VER='3.11 (16/11/2026)';
 function $(s,r){return (r||document).querySelector(s)}
 function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
 function clamp(v,a,b){return v<a?a:(v>b?b:v)}
@@ -1576,7 +1576,7 @@ PANELS.more=function(){
   if(ui.fxpv==null)ui.fxpv=50;
   if(txt){
     if(ui.ocrMsg)h+='<div class="hint" style="margin:2px 0">'+esc(ui.ocrMsg)+'</div>';
-    h+='<div class="row"><button class="bt sm'+(ui.ocrMode==='print'?' on':'')+'" data-act="ocrRun"'+(ui.ocrBusy?' disabled':'')+'>'+(ui.ocrBusy?'Đang đọc…':'Đọc chữ in')+'</button><button class="bt sm'+(ui.ocrMode==='hand'?' on':'')+'" data-act="ocrLive"'+(ui.ocrBusy?' disabled':'')+'>Đọc viết tay</button></div>';
+    h+='<div class="row"><button class="bt sm'+(ui.ocrMode==='print'?' on':'')+'" data-act="ocrRun"'+(ui.ocrBusy?' disabled':'')+'>'+(ui.ocrBusy?'Đang đọc…':'Tự động')+'</button><button class="bt sm'+(ui.ocrMode==='hand'?' on':'')+'" data-act="ocrLive"'+(ui.ocrBusy?' disabled':'')+'>Thủ công</button><span style="flex:1;min-width:0;font-size:11px;line-height:1.3;color:var(--ink2);margin-left:4px">Scan có thể sai nội dung, bạn cần kiểm tra và sửa lại</span></div>';
   }
   if(!scan){
     h+='<div class="chips" id="xstrip" style="padding-top:9px">';
