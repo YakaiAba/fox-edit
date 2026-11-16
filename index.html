@@ -154,6 +154,10 @@ select.sel,input.txt{width:100%;border:1.5px solid var(--ink);border-radius:var(
 #camBox{position:relative}
 #camGrid{position:absolute;inset:0;pointer-events:none;background:linear-gradient(to right,transparent calc(33.333% - .5px),#fffc calc(33.333% - .5px),#fffc calc(33.333% + .5px),transparent calc(33.333% + .5px)),linear-gradient(to right,transparent calc(66.666% - .5px),#fffc calc(66.666% - .5px),#fffc calc(66.666% + .5px),transparent calc(66.666% + .5px)),linear-gradient(to bottom,transparent calc(33.333% - .5px),#fffc calc(33.333% - .5px),#fffc calc(33.333% + .5px),transparent calc(33.333% + .5px)),linear-gradient(to bottom,transparent calc(66.666% - .5px),#fffc calc(66.666% - .5px),#fffc calc(66.666% + .5px),transparent calc(66.666% + .5px))}
 #camGrid[hidden]{display:none}
+#camZ{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:flex;gap:6px;background:#0007;border-radius:20px;padding:4px 6px}
+#camZ button{min-width:38px;height:30px;border-radius:15px;border:0;background:transparent;color:#fff;font:600 14px FoxBody,sans-serif}
+#camZ button.on{background:var(--mint);color:var(--ink)}
+#camInfo{position:absolute;left:8px;top:6px;font:11px FoxBody,sans-serif;color:#fffc;text-shadow:0 0 3px #000}
 #camFlash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .12s}
 #camOv .cp{background:#fff;border-top:1.8px solid var(--ink);padding:6px 10px calc(env(safe-area-inset-bottom) + 10px)}
 #camOv .shot{display:flex;justify-content:space-between;align-items:center;padding:2px 14px 8px}
@@ -165,8 +169,8 @@ select.sel,input.txt{width:100%;border:1.5px solid var(--ink);border-radius:var(
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="wob" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".05" numOctaves="2" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.4" xChannelSelector="R" yChannelSelector="G"/></filter></svg>
 <div id="app">
   <header id="top">
-    <button class="ib" id="bOpen" aria-label="Về trang chủ"></button>
     <div class="ttl">Fox-edit</div>
+    <button class="ib" id="bOpen" aria-label="Về trang chủ"></button>
     <span class="sp"></span>
     <button class="ib" id="bUndo" aria-label="Hoàn tác" disabled></button>
     <button class="ib" id="bRedo" aria-label="Làm lại" disabled></button>
@@ -191,7 +195,7 @@ select.sel,input.txt{width:100%;border:1.5px solid var(--ink);border-radius:var(
 <div id="busy" hidden><div class="sp"></div><div id="busyMsg">Đang xử lý…</div><div class="pb"><div id="busyBar"></div></div></div>
 <script>
 'use strict';
-var APP_VER='3.20 (16/11/2026)';
+var APP_VER='3.23 (16/11/2026)';
 function $(s,r){return (r||document).querySelector(s)}
 function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
 function clamp(v,a,b){return v<a?a:(v>b?b:v)}
@@ -716,7 +720,7 @@ function skinTone(src,W,H,amt,mask){
 
 /* ===== Xóa bóng: ước lượng ánh sáng nền bằng phép "đóng" hình thái (giữ mép bóng gắt, bỏ chữ/nét mảnh), rồi chia lại từng kênh màu ===== */
 function shadeMap(src,W,H){
-  var B=Math.max(3,Math.round(Math.max(W,H)/260)),gw=Math.ceil(W/B),gh=Math.ceil(H/B),n=gw*gh,x,y,i,c;
+  var B=Math.max(2,Math.round(Math.max(W,H)/500)),gw=Math.ceil(W/B),gh=Math.ceil(H/B),n=gw*gh,x,y,i,c;
   var ch=[new Float32Array(n),new Float32Array(n),new Float32Array(n)];
   for(y=0;y<H;y++)for(x=0;x<W;x++){
     var p=(y*W+x)*4,g=((y/B)|0)*gw+((x/B)|0);
@@ -729,16 +733,17 @@ function shadeMap(src,W,H){
   function bl(a){var o=new Float32Array(n),dx,dy,sm;
     for(y=0;y<gh;y++)for(x=0;x<gw;x++){sm=0;for(dy=-1;dy<=1;dy++)for(dx=-1;dx<=1;dx++)sm+=a[Math.min(gh-1,Math.max(0,y+dy))*gw+Math.min(gw-1,Math.max(0,x+dx))];o[y*gw+x]=sm/9}
     return o}
-  var r=3,g3=new Float32Array(n*3);
+  var r=8,g3=new Float32Array(n*3);
   for(c=0;c<3;c++){
-    var bg=bl(mm(mm(ch[c],r,true),r,false));
+    var bg=mm(mm(ch[c],r,true),r,false);
     for(i=0;i<n;i++)g3[i*3+c]=Math.min(4,Math.max(0.9,244/Math.max(25,bg[i])));
   }
   return {B:B,gw:gw,gh:gh,g:g3};
 }
 function shadeApply(src,W,H,amt,M){
   var out=new Uint8ClampedArray(src),B=M.B,gw=M.gw,gh=M.gh,g=M.g,x,y,c,i,LT=new Float32Array(1025);
-  for(i=0;i<=1024;i++){var v=i/800;v=Math.min(1,v/0.95);LT[i]=244*Math.pow(v,1+0.3*amt)}
+  var wgt=Math.min(1,amt*2),ex=Math.max(0,amt-0.5)*2;
+  for(i=0;i<=1024;i++){var v=i/800;v=Math.min(1,v/0.95);LT[i]=244*Math.pow(v,1+0.3*ex)}
   for(y=0;y<H;y++){
     var fy=y/B-0.5,y0=Math.max(0,Math.min(gh-1,Math.floor(fy))),y1=Math.min(gh-1,y0+1),ty=Math.min(1,Math.max(0,fy-y0));
     for(x=0;x<W;x++){
@@ -747,7 +752,7 @@ function shadeApply(src,W,H,amt,M){
       for(c=0;c<3;c++){
         var a=g[(y0*gw+x0)*3+c]*(1-tx)+g[(y0*gw+x1)*3+c]*tx,b=g[(y1*gw+x0)*3+c]*(1-tx)+g[(y1*gw+x1)*3+c]*tx,G=a*(1-ty)+b*ty;
         var r=src[i+c]*G/244,idx=(r*800)|0;if(idx>1024)idx=1024;
-        out[i+c]=src[i+c]+(LT[idx]-src[i+c])*amt;
+        out[i+c]=src[i+c]+(LT[idx]-src[i+c])*wgt;
       }
     }
   }
@@ -1139,7 +1144,7 @@ function pipe(src,W,H,p,useCache){
   if(fxv.shade>0){
     var sk=doc.ver+'|'+W+'|'+H,sm;
     if(useCache&&c.sk===sk)sm=c.sm;else{sm=shadeMap(src,W,H);if(useCache){c.sk=sk;c.sm=sm}}
-    s=shadeApply(s,W,H,Math.min(1,fxv.shade/100*1.5),sm);
+    s=shadeApply(s,W,H,Math.min(1,fxv.shade/100),sm);
   }
   var M=null;
   if(p.match&&p.match.on&&p.match.t>0)M=useCache?getMatch(p.match):buildMatch(p.match,targetStats());
@@ -2531,15 +2536,29 @@ async function colSave(){
 }
 $('#bCollage').addEventListener('click',openCollage);
 /* ===== Chụp ảnh trực tiếp, xem trước màu film ===== */
-var CAM={stream:null,facing:'environment',fc:0,fi:-1,t:1,raf:0,last:0,vid:null,off:null};
+var CAM={lens:'main',ultra:null,z:1,stream:null,facing:'environment',fc:0,fi:-1,t:1,raf:0,last:0,vid:null,off:null};
 function camHtml(){
-  var h='<div class="ct"><button class="bt sm" id="camX">Thoát</button><div class="ttl">Chụp ảnh</div><button class="bt sm" id="camFlip">Đổi camera</button></div><div class="vf"><div id="camBox"><canvas id="camV"></canvas><div id="camGrid"'+(CAM.grid?'':' hidden')+'></div><div id="camFlash"></div></div></div><div class="cp"><div class="shot"><button class="bt sm" id="camAlbum">Ảnh</button><button id="camShot" aria-label="Chụp"></button><button class="bt sm'+(CAM.grid?' on':'')+'" id="camGr">Lưới</button></div><div class="chips" id="camCat">';
+  var h='<div class="ct"><button class="bt sm" id="camX">Thoát</button><div class="ttl">Chụp ảnh</div><button class="bt sm" id="camFlip">Đổi camera</button></div><div class="vf"><div id="camBox"><canvas id="camV"></canvas><div id="camGrid"'+(CAM.grid?'':' hidden')+'></div><div id="camFlash"></div><div id="camZ">'+(CAM.ultra&&CAM.facing==='environment'?[0.5,1,2,3,5]:[1,2,3,5]).map(function(z){return '<button data-z="'+z+'" class="'+(Math.abs(CAM.z-z)<0.05?'on':'')+'">'+String(z).replace('.',',')+'x</button>'}).join('')+'</div><div id="camInfo"></div></div></div><div class="cp"><div class="shot"><button class="bt sm" id="camAlbum">Ảnh</button><button id="camShot" aria-label="Chụp"></button><button class="bt sm'+(CAM.grid?' on':'')+'" id="camGr">Lưới</button></div><div class="chips" id="camCat">';
   FILM.forEach(function(c,i){h+='<button class="chip'+(CAM.fc===i?' on':'')+'" data-cc="'+i+'">'+esc(c.name)+'</button>'});
   h+='</div><div class="chips" id="camStrip"><button class="chip'+(CAM.fi<0?' on':'')+'" data-cf="-1">Gốc</button>';
   FILM[CAM.fc].list.forEach(function(p,i){h+='<button class="chip'+(CAM.fi===i&&CAM.fcSel===CAM.fc?' on':'')+'" data-cf="'+i+'">'+esc(p.name)+'</button>'});
   h+='</div>';
   if(CAM.fi>=0)h+='<div class="sl"><span class="sn">Mức độ</span><input type="range" id="camT" min="0" max="100" step="1" value="'+Math.round(CAM.t*50)+'"><b id="camTv">'+Math.round(CAM.t*50)+'</b><button class="rs" id="camRs" aria-label="Về 50">↺</button></div>';
   return h+'</div>';
+}
+async function camSetZoom(z){
+  z=Math.max(CAM.ultra&&CAM.facing==='environment'?0.5:1,Math.min(5,z));CAM.z=z;
+  var need=(z<1)?'ultra':'main';
+  if(need!==CAM.lens&&!CAM.switching){
+    CAM.switching=true;CAM.lens=need;
+    try{await camStart()}catch(e){CAM.lens='main';CAM.z=1;try{await camStart()}catch(x){}}
+    CAM.switching=false;
+  }
+  CAM.zf=CAM.lens==='ultra'?z/0.5:z;CAM.hw=false;
+  var tr=CAM.stream&&CAM.stream.getVideoTracks()[0],cp=tr&&tr.getCapabilities&&tr.getCapabilities();
+  if(CAM.lens==='main'&&cp&&cp.zoom&&cp.zoom.max>=z){try{await tr.applyConstraints({advanced:[{zoom:Math.max(cp.zoom.min||1,z)}]});CAM.hw=true}catch(e){CAM.hw=false}}
+  var zb=document.querySelectorAll('#camZ button');for(var i=0;i<zb.length;i++)zb[i].className=Math.abs(+zb[i].getAttribute('data-z')-z)<0.05?'on':'';
+  var zi=$('#camInfo');if(zi)zi.textContent=(Math.round(z*10)/10)+'x · '+(CAM.vid?CAM.vid.videoWidth+'×'+CAM.vid.videoHeight:'')+(CAM.lens==='ultra'?' · góc rộng':'')+(CAM.hw?' · zoom máy':'');
 }
 function camFit(){
   var vf=$('#camOv .vf'),bx=$('#camBox');if(!vf||!bx)return;
@@ -2552,10 +2571,10 @@ function camRender(){
   var keepC=$('#camCat')?$('#camCat').scrollLeft:0;
   o.innerHTML=camHtml();
   $('#camCat').scrollLeft=keepC;
-  CAM.cv=$('#camV');camFit();
+  CAM.cv=$('#camV');camFit();if(CAM.vid&&CAM.vid.videoWidth)camSetZoom(CAM.z);
   $('#camV').style.transform=CAM.facing==='user'?'scaleX(-1)':'none';
 }
-function camCrop(v){var vw=v.videoWidth,vh=v.videoHeight,sw=Math.min(vw,vh*3/4),sh=sw*4/3;return [(vw-sw)/2,(vh-sh)/2,sw,sh]}
+function camCrop(v){var vw=v.videoWidth,vh=v.videoHeight,z=CAM.hw?1:(CAM.zf||CAM.z),sw=Math.min(vw,vh*3/4)/z,sh=sw*4/3;return [(vw-sw)/2,(vh-sh)/2,sw,sh]}
 function camTick(ts){
   CAM.raf=requestAnimationFrame(camTick);
   var v=CAM.vid,cv=$('#camV');if(!v||!cv||!v.videoWidth||ts-CAM.last<60)return;
@@ -2572,22 +2591,32 @@ function camTick(ts){
 }
 async function camStart(){
   if(CAM.stream){CAM.stream.getTracks().forEach(function(t){t.stop()});CAM.stream=null}
-  CAM.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:CAM.facing},width:{ideal:1440},height:{ideal:1920}},audio:false});
+  var vc={width:{ideal:1920},height:{ideal:1440},aspectRatio:{ideal:4/3}};
+  if(CAM.lens==='ultra'&&CAM.ultra)vc.deviceId={exact:CAM.ultra};else vc.facingMode={ideal:CAM.facing};
+  CAM.stream=await navigator.mediaDevices.getUserMedia({video:vc,audio:false});
   var v=CAM.vid;v.srcObject=CAM.stream;await v.play();
+}
+async function camFindUltra(){
+  try{
+    var ds=await navigator.mediaDevices.enumerateDevices();
+    var u=ds.filter(function(d){return d.kind==='videoinput'&&/ultra|siêu rộng/i.test(d.label)&&!/front|trước/i.test(d.label)})[0];
+    CAM.ultra=u?u.deviceId:null;
+  }catch(e){CAM.ultra=null}
 }
 async function openCam(){
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$('#fileCam').value='';$('#fileCam').click();return}
-  CAM.fc=0;CAM.fi=-1;CAM.fcSel=0;CAM.t=1;CAM.grid=false;CAM.busy=false;
+  CAM.z=1;CAM.zf=1;CAM.lens='main';CAM.hw=false;CAM.fc=0;CAM.fi=-1;CAM.fcSel=0;CAM.t=1;CAM.grid=false;CAM.busy=false;
   var o=document.createElement('div');o.id='camOv';document.body.appendChild(o);
   var v=document.createElement('video');v.setAttribute('playsinline','');v.muted=true;CAM.vid=v;
   camRender();
   try{await camStart()}catch(e){closeCam();toast('Không mở được camera. Hãy cho phép truy cập camera, hoặc dùng ảnh chụp từ máy.');$('#fileCam').value='';$('#fileCam').click();return}
-  CAM.raf=requestAnimationFrame(camTick);
+  await camFindUltra();camRender();CAM.raf=requestAnimationFrame(camTick);camSetZoom(1);
   o.addEventListener('click',async function(e){
     var b=e.target.closest('button');if(!b)return;
     if(b.id==='camX')closeCam();
-    else if(b.id==='camFlip'){CAM.facing=CAM.facing==='user'?'environment':'user';try{await camStart();camRender()}catch(x){toast('Không đổi được camera')}}
+    else if(b.id==='camFlip'){CAM.facing=CAM.facing==='user'?'environment':'user';CAM.lens='main';CAM.z=1;CAM.zf=1;try{await camStart();camRender();camSetZoom(1)}catch(x){toast('Không đổi được camera')}}
     else if(b.id==='camShot')camShot();
+    else if(b.hasAttribute('data-z'))camSetZoom(+b.getAttribute('data-z'));
     else if(b.id==='camGr'){CAM.grid=!CAM.grid;camRender()}
     else if(b.id==='camAlbum'){closeCam();$('#fileMain').value='';$('#fileMain').click()}
     else if(b.id==='camRs'){CAM.t=1;camRender()}
@@ -2599,6 +2628,11 @@ async function openCam(){
       var s2=$('#camStrip');s2.scrollLeft=L;if(D)requestAnimationFrame(function(){try{s2.scrollTo({left:L+D,behavior:'smooth'})}catch(x){s2.scrollLeft=L+D}});
     }
   });
+  var pd=0,pz=1;
+  function dist(t){return Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY)}
+  o.addEventListener('touchstart',function(e){if(e.touches.length===2&&e.target.closest('#camBox')){pd=dist(e.touches);pz=CAM.z}},{passive:true});
+  o.addEventListener('touchmove',function(e){if(e.touches.length===2&&pd&&e.target.closest('#camBox')){e.preventDefault();camSetZoom(pz*dist(e.touches)/pd)}},{passive:false});
+  o.addEventListener('touchend',function(){pd=0},{passive:true});
   o.addEventListener('input',function(e){if(e.target.id==='camT'){CAM.t=+e.target.value/50;$('#camTv').textContent=e.target.value}});
 }
 function closeCam(){
