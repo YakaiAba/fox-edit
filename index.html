@@ -157,6 +157,8 @@ select.sel,input.txt{width:100%;border:1.5px solid var(--ink);border-radius:var(
 #camZ{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:flex;gap:6px;background:#0007;border-radius:20px;padding:4px 6px}
 #camZ button{min-width:38px;height:30px;border-radius:15px;border:0;background:transparent;color:#fff;font:600 14px FoxBody,sans-serif}
 #camZ button.on{background:var(--mint);color:var(--ink)}
+@keyframes camF{0%{transform:translate(-50%,-50%) scale(1.5);opacity:0}20%{opacity:1}100%{transform:translate(-50%,-50%) scale(1);opacity:.9}}
+.camFocus{position:absolute;width:64px;height:64px;border:2px solid #ffd54a;border-radius:6px;pointer-events:none;animation:camF .35s ease-out forwards}
 #camInfo{position:absolute;left:8px;top:6px;font:11px FoxBody,sans-serif;color:#fffc;text-shadow:0 0 3px #000}
 #camFlash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .12s}
 #camOv .cp{background:#fff;border-top:1.8px solid var(--ink);padding:6px 10px calc(env(safe-area-inset-bottom) + 10px)}
@@ -195,7 +197,7 @@ select.sel,input.txt{width:100%;border:1.5px solid var(--ink);border-radius:var(
 <div id="busy" hidden><div class="sp"></div><div id="busyMsg">Đang xử lý…</div><div class="pb"><div id="busyBar"></div></div></div>
 <script>
 'use strict';
-var APP_VER='3.23 (16/11/2026)';
+var APP_VER='3.24 (16/11/2026)';
 function $(s,r){return (r||document).querySelector(s)}
 function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
 function clamp(v,a,b){return v<a?a:(v>b?b:v)}
@@ -2538,7 +2540,7 @@ $('#bCollage').addEventListener('click',openCollage);
 /* ===== Chụp ảnh trực tiếp, xem trước màu film ===== */
 var CAM={lens:'main',ultra:null,z:1,stream:null,facing:'environment',fc:0,fi:-1,t:1,raf:0,last:0,vid:null,off:null};
 function camHtml(){
-  var h='<div class="ct"><button class="bt sm" id="camX">Thoát</button><div class="ttl">Chụp ảnh</div><button class="bt sm" id="camFlip">Đổi camera</button></div><div class="vf"><div id="camBox"><canvas id="camV"></canvas><div id="camGrid"'+(CAM.grid?'':' hidden')+'></div><div id="camFlash"></div><div id="camZ">'+(CAM.ultra&&CAM.facing==='environment'?[0.5,1,2,3,5]:[1,2,3,5]).map(function(z){return '<button data-z="'+z+'" class="'+(Math.abs(CAM.z-z)<0.05?'on':'')+'">'+String(z).replace('.',',')+'x</button>'}).join('')+'</div><div id="camInfo"></div></div></div><div class="cp"><div class="shot"><button class="bt sm" id="camAlbum">Ảnh</button><button id="camShot" aria-label="Chụp"></button><button class="bt sm'+(CAM.grid?' on':'')+'" id="camGr">Lưới</button></div><div class="chips" id="camCat">';
+  var h='<div class="ct"><button class="bt sm" id="camX">Thoát</button><div class="ttl">Chụp ảnh</div><button class="bt sm" id="camFlip">Đổi camera</button></div><div class="vf"><div id="camBox"><canvas id="camV"></canvas><div id="camGrid"'+(CAM.grid?'':' hidden')+'></div><div id="camFlash"></div><div id="camZ">'+(CAM.facing==='environment'?[0.5,1,2,3,5]:[1,2,3,5]).map(function(z){return '<button data-z="'+z+'" class="'+(Math.abs(CAM.z-z)<0.05?'on':'')+'">'+String(z).replace('.',',')+'x</button>'}).join('')+'</div><div id="camInfo"></div></div></div><div class="cp"><div class="shot"><button class="bt sm" id="camAlbum">Ảnh</button><button id="camShot" aria-label="Chụp"></button><button class="bt sm'+(CAM.grid?' on':'')+'" id="camGr">Lưới</button></div><div class="chips" id="camCat">';
   FILM.forEach(function(c,i){h+='<button class="chip'+(CAM.fc===i?' on':'')+'" data-cc="'+i+'">'+esc(c.name)+'</button>'});
   h+='</div><div class="chips" id="camStrip"><button class="chip'+(CAM.fi<0?' on':'')+'" data-cf="-1">Gốc</button>';
   FILM[CAM.fc].list.forEach(function(p,i){h+='<button class="chip'+(CAM.fi===i&&CAM.fcSel===CAM.fc?' on':'')+'" data-cf="'+i+'">'+esc(p.name)+'</button>'});
@@ -2546,9 +2548,16 @@ function camHtml(){
   if(CAM.fi>=0)h+='<div class="sl"><span class="sn">Mức độ</span><input type="range" id="camT" min="0" max="100" step="1" value="'+Math.round(CAM.t*50)+'"><b id="camTv">'+Math.round(CAM.t*50)+'</b><button class="rs" id="camRs" aria-label="Về 50">↺</button></div>';
   return h+'</div>';
 }
+function camMark(z){var zb=document.querySelectorAll('#camZ button');for(var i=0;i<zb.length;i++)zb[i].className=Math.abs(+zb[i].getAttribute('data-z')-z)<0.05?'on':''}
 async function camSetZoom(z){
-  z=Math.max(CAM.ultra&&CAM.facing==='environment'?0.5:1,Math.min(5,z));CAM.z=z;
+  z=Math.max(CAM.facing==='environment'?0.5:1,Math.min(5,z));CAM.z=z;
   var need=(z<1)?'ultra':'main';
+  if(need==='ultra'&&!CAM.ultra){
+    var t0=CAM.stream&&CAM.stream.getVideoTracks()[0],c0=t0&&t0.getCapabilities&&t0.getCapabilities();
+    if(c0&&c0.zoom&&c0.zoom.min<=0.5){try{await t0.applyConstraints({advanced:[{zoom:0.5}]});CAM.hw=true;CAM.zf=1;CAM.lens='main';camMark(z);return}catch(e){}}
+    toast('Không tìm thấy camera góc rộng. Camera: '+(CAM.labels&&CAM.labels.length?CAM.labels.join(', '):'không có tên'));
+    CAM.z=1;z=1;need='main';
+  }
   if(need!==CAM.lens&&!CAM.switching){
     CAM.switching=true;CAM.lens=need;
     try{await camStart()}catch(e){CAM.lens='main';CAM.z=1;try{await camStart()}catch(x){}}
@@ -2557,7 +2566,7 @@ async function camSetZoom(z){
   CAM.zf=CAM.lens==='ultra'?z/0.5:z;CAM.hw=false;
   var tr=CAM.stream&&CAM.stream.getVideoTracks()[0],cp=tr&&tr.getCapabilities&&tr.getCapabilities();
   if(CAM.lens==='main'&&cp&&cp.zoom&&cp.zoom.max>=z){try{await tr.applyConstraints({advanced:[{zoom:Math.max(cp.zoom.min||1,z)}]});CAM.hw=true}catch(e){CAM.hw=false}}
-  var zb=document.querySelectorAll('#camZ button');for(var i=0;i<zb.length;i++)zb[i].className=Math.abs(+zb[i].getAttribute('data-z')-z)<0.05?'on':'';
+  camMark(z);
   var zi=$('#camInfo');if(zi)zi.textContent=(Math.round(z*10)/10)+'x · '+(CAM.vid?CAM.vid.videoWidth+'×'+CAM.vid.videoHeight:'')+(CAM.lens==='ultra'?' · góc rộng':'')+(CAM.hw?' · zoom máy':'');
 }
 function camFit(){
@@ -2597,9 +2606,12 @@ async function camStart(){
   var v=CAM.vid;v.srcObject=CAM.stream;await v.play();
 }
 async function camFindUltra(){
+  CAM.labels=[];
   try{
     var ds=await navigator.mediaDevices.enumerateDevices();
-    var u=ds.filter(function(d){return d.kind==='videoinput'&&/ultra|siêu rộng/i.test(d.label)&&!/front|trước/i.test(d.label)})[0];
+    var vs=ds.filter(function(d){return d.kind==='videoinput'});
+    CAM.labels=vs.map(function(d){return d.label||'(không tên)'});
+    var u=vs.filter(function(d){return /ultra|siêu rộng|0[.,]5|góc rộng/i.test(d.label)&&!/front|trước|selfie/i.test(d.label)})[0];
     CAM.ultra=u?u.deviceId:null;
   }catch(e){CAM.ultra=null}
 }
@@ -2627,6 +2639,17 @@ async function openCam(){
       camRender();
       var s2=$('#camStrip');s2.scrollLeft=L;if(D)requestAnimationFrame(function(){try{s2.scrollTo({left:L+D,behavior:'smooth'})}catch(x){s2.scrollLeft=L+D}});
     }
+  });
+  o.addEventListener('click',async function(e){
+    if(e.target.closest('button')||!e.target.closest('#camBox'))return;
+    var bx=$('#camBox'),r=bx.getBoundingClientRect(),px=(e.clientX-r.left)/r.width,py=(e.clientY-r.top)/r.height;
+    var sq=document.createElement('div');sq.className='camFocus';sq.style.left=(px*100)+'%';sq.style.top=(py*100)+'%';bx.appendChild(sq);setTimeout(function(){sq.remove()},900);
+    var v=CAM.vid,tr=CAM.stream&&CAM.stream.getVideoTracks()[0];if(!v||!tr)return;
+    var cr=camCrop(v),mx=CAM.facing==='user'?1-px:px,vx=(cr[0]+mx*cr[2])/v.videoWidth,vy=(cr[1]+py*cr[3])/v.videoHeight,cp=tr.getCapabilities&&tr.getCapabilities(),ok=false;
+    if(cp&&cp.focusMode&&cp.focusMode.indexOf&&cp.focusMode.indexOf('single-shot')>=0){
+      try{await tr.applyConstraints({advanced:[{focusMode:'single-shot',pointsOfInterest:[{x:vx,y:vy}]}]});ok=true;setTimeout(function(){try{tr.applyConstraints({advanced:[{focusMode:'continuous'}]})}catch(x){}},1500)}catch(x){}
+    }
+    if(!ok&&!CAM.focusNote){CAM.focusNote=true;toast('iPhone chưa cho web app chọn điểm lấy nét; máy vẫn tự lấy nét liên tục.')}
   });
   var pd=0,pz=1;
   function dist(t){return Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY)}
