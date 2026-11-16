@@ -197,7 +197,7 @@ select.sel,input.txt{width:100%;border:1.5px solid var(--ink);border-radius:var(
 <div id="busy" hidden><div class="sp"></div><div id="busyMsg">Đang xử lý…</div><div class="pb"><div id="busyBar"></div></div></div>
 <script>
 'use strict';
-var APP_VER='3.24 (16/11/2026)';
+var APP_VER='3.25 (16/11/2026)';
 function $(s,r){return (r||document).querySelector(s)}
 function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
 function clamp(v,a,b){return v<a?a:(v>b?b:v)}
@@ -2545,12 +2545,13 @@ function camHtml(){
   h+='</div><div class="chips" id="camStrip"><button class="chip'+(CAM.fi<0?' on':'')+'" data-cf="-1">Gốc</button>';
   FILM[CAM.fc].list.forEach(function(p,i){h+='<button class="chip'+(CAM.fi===i&&CAM.fcSel===CAM.fc?' on':'')+'" data-cf="'+i+'">'+esc(p.name)+'</button>'});
   h+='</div>';
-  if(CAM.fi>=0)h+='<div class="sl"><span class="sn">Mức độ</span><input type="range" id="camT" min="0" max="100" step="1" value="'+Math.round(CAM.t*50)+'"><b id="camTv">'+Math.round(CAM.t*50)+'</b><button class="rs" id="camRs" aria-label="Về 50">↺</button></div>';
+  h+='<div class="sl"'+(CAM.fi<0?' style="visibility:hidden"':'')+'><span class="sn">Mức độ</span><input type="range" id="camT" min="0" max="100" step="1" value="'+Math.round(CAM.t*50)+'"><b id="camTv">'+Math.round(CAM.t*50)+'</b><button class="rs" id="camRs" aria-label="Về 50">↺</button></div>';
   return h+'</div>';
 }
+function camZmax(){var tr=CAM.stream&&CAM.stream.getVideoTracks()[0],cp=tr&&tr.getCapabilities&&tr.getCapabilities();return (cp&&cp.zoom&&cp.zoom.max>5)?cp.zoom.max:5}
 function camMark(z){var zb=document.querySelectorAll('#camZ button');for(var i=0;i<zb.length;i++)zb[i].className=Math.abs(+zb[i].getAttribute('data-z')-z)<0.05?'on':''}
 async function camSetZoom(z){
-  z=Math.max(CAM.facing==='environment'?0.5:1,Math.min(5,z));CAM.z=z;
+  z=Math.max(CAM.facing==='environment'?0.5:1,Math.min(camZmax(),z));CAM.z=z;
   var need=(z<1)?'ultra':'main';
   if(need==='ultra'&&!CAM.ultra){
     var t0=CAM.stream&&CAM.stream.getVideoTracks()[0],c0=t0&&t0.getCapabilities&&t0.getCapabilities();
