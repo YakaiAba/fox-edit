@@ -32,6 +32,7 @@ input,select,textarea{font:inherit;font-size:16px;color:var(--tx)}
 #top,#cTop{background:#fff;color:var(--ink2);display:flex;align-items:center;gap:2px;padding:calc(env(safe-area-inset-top) + 4px) 8px 4px;min-height:42px;flex:0 0 auto;border-bottom:1.8px solid var(--ink)}
 #top .ttl,#cTop .ttl{font:400 24px/1 FoxHand,FoxBody,sans-serif;margin:0 6px 0 4px;white-space:nowrap;color:var(--ink2)}
 #top .sp,#cTop .sp{flex:1}
+#bOpen img{width:30px;height:30px;border-radius:8px;display:block;pointer-events:none}
 .ib{width:36px;height:36px;border-radius:var(--wob);color:var(--ink);display:flex;align-items:center;justify-content:center}
 .ib:active,.ib.hold{background:var(--mint)}
 .ib[disabled]{opacity:.3}
@@ -88,6 +89,7 @@ input[type=range]::-webkit-slider-runnable-track{height:3px;background:var(--ink
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:var(--sun);border:1.8px solid var(--ink);margin-top:-11.5px}
 input[type=range]::-moz-range-track{height:3px;background:var(--ink);border-radius:2px;opacity:.55}
 input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--sun);border:1.8px solid var(--ink)}
+.cropbtns{display:flex;gap:8px;margin:6px 0 2px;align-items:stretch}.cropbtns .g{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:6px}.cropbtns .r{width:38%;display:flex;flex-direction:column;gap:6px}.cropbtns .bt{width:100%;justify-content:center}
 .row{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 4px;align-items:center}
 .bt{padding:7px 13px;border-radius:var(--wob);background:#fff;border:1.6px solid var(--ink);font-size:14px;font-weight:600;color:var(--ink2)}
 .bt:active{background:var(--mint)}
@@ -151,6 +153,11 @@ select.sel,input.txt{width:100%;border:1.5px solid var(--ink);border-radius:var(
 #camOv .ct .ttl{flex:1;text-align:center;font:400 20px FoxHand,FoxBody,sans-serif;color:var(--ink2)}
 #camOv .vf{flex:1;min-height:0;background:#111;display:flex;align-items:center;justify-content:center;overflow:hidden}
 #camOv .vf canvas{width:100%;height:100%;display:block}
+#camVid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;transform-origin:50% 50%;background:#000}
+#camBox{overflow:hidden}
+#camV{position:absolute;inset:0;z-index:1}
+#camGrid,#camFlash,#camZ,#camInfo{z-index:3}
+#camPk{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 #camBox{position:relative}
 #camGrid{position:absolute;inset:0;pointer-events:none;background:linear-gradient(to right,transparent calc(33.333% - .5px),#fffc calc(33.333% - .5px),#fffc calc(33.333% + .5px),transparent calc(33.333% + .5px)),linear-gradient(to right,transparent calc(66.666% - .5px),#fffc calc(66.666% - .5px),#fffc calc(66.666% + .5px),transparent calc(66.666% + .5px)),linear-gradient(to bottom,transparent calc(33.333% - .5px),#fffc calc(33.333% - .5px),#fffc calc(33.333% + .5px),transparent calc(33.333% + .5px)),linear-gradient(to bottom,transparent calc(66.666% - .5px),#fffc calc(66.666% - .5px),#fffc calc(66.666% + .5px),transparent calc(66.666% + .5px))}
 #camGrid[hidden]{display:none}
@@ -164,7 +171,7 @@ select.sel,input.txt{width:100%;border:1.5px solid var(--ink);border-radius:var(
 #camOv .cp{background:#fff;border-top:1.8px solid var(--ink);padding:6px 10px calc(env(safe-area-inset-bottom) + 10px)}
 #camOv .shot{display:flex;justify-content:space-between;align-items:center;padding:2px 14px 8px}
 #camOv .shot #camShot{width:66px;height:66px;border-radius:50%;border:3px solid var(--ink);background:var(--mint);box-shadow:inset 0 0 0 4px #fff}
-#camOv .shot .bt{min-width:70px}
+#camOv .shot .bt{min-width:56px}
 </style>
 </head>
 <body>
@@ -197,7 +204,7 @@ select.sel,input.txt{width:100%;border:1.5px solid var(--ink);border-radius:var(
 <div id="busy" hidden><div class="sp"></div><div id="busyMsg">Đang xử lý…</div><div class="pb"><div id="busyBar"></div></div></div>
 <script>
 'use strict';
-var APP_VER='3.25 (16/11/2026)';
+var APP_VER='3.26 (23/11/2026)';
 function $(s,r){return (r||document).querySelector(s)}
 function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
 function clamp(v,a,b){return v<a?a:(v>b?b:v)}
@@ -1318,8 +1325,10 @@ function renderNow(){
   var ctx=$('#view').getContext('2d'),W=pv.w,H=pv.h;
   if(ui.tab==='crop'&&ui.crop){
     setViewSize(W,H);ctx.fillStyle='#EFEDE7';ctx.fillRect(0,0,W,H);
-    var a=ui.crop.angle*Math.PI/180,k=coverScale(W,H,a);
-    ctx.save();ctx.translate(W/2,H/2);ctx.rotate(a);ctx.scale(k,k);ctx.drawImage(OUTC,-W/2,-H/2);ctx.restore();
+    var cc=ui.crop,a=cc.angle*Math.PI/180,k=coverScale(W,H,a)*(cc.z||1);
+    if(cc.ratio!=='free')cropFixedRect();
+    clampPan(cc,W,H);
+    ctx.save();ctx.translate(W/2+cc.ox,H/2+cc.oy);ctx.rotate(a);ctx.scale(k,k);ctx.drawImage(OUTC,-W/2,-H/2);ctx.restore();
   }else if(BARE[ui.tab]){setViewSize(W,H);ctx.drawImage(OUTC,0,0)}
   else{
     var f=ui.cmp?noFrame():doc.p.frame,L=frameLayout(W,H,f);
@@ -1448,7 +1457,7 @@ var ICONS={
   frame:'<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="8" y="8" width="8" height="8" fill="'+MINT+'"/>'
 };
 function ic(k){return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">'+ICONS[k]+'</svg>'}
-[['#bOpen','plus'],['#bUndo','undo'],['#bRedo','redo'],['#bCmp','cmp'],['#bSet','gear']].forEach(function(x){$(x[0]).innerHTML=ic(x[1])});
+[['#bUndo','undo'],['#bRedo','redo'],['#bCmp','cmp'],['#bSet','gear']].forEach(function(x){$(x[0]).innerHTML=ic(x[1])});
 var ADJ=[['ex','Phơi sáng'],['br','Độ rực'],['hl','Vùng sáng'],['sh','Vùng tối'],['ct','Tương phản'],['bright','Độ sáng'],['bp','Điểm đen'],['sat','Bão hòa'],['vib','Sống động'],['wm','Độ ấm'],['tn','Sắc thái'],['sharp','Độ nét',1],['clar','Chi tiết',1],['nr','Khử nhiễu',1],['vg','Vignette']];
 var FONTS=[['Mặc định','FoxBody,Helvetica,Arial,sans-serif'],['Helvetica Neue','"Helvetica Neue",Helvetica,Arial,sans-serif'],['Avenir Next','"Avenir Next",Avenir,sans-serif'],['Futura','Futura,"Trebuchet MS",sans-serif'],['Georgia','Georgia,serif'],['Times','"Times New Roman",Times,serif'],['Didot','Didot,"Bodoni 72",serif'],['Palatino','Palatino,"Palatino Linotype",serif'],['Baskerville','Baskerville,Georgia,serif'],['Marker Felt','"Marker Felt","Comic Sans MS",cursive'],['Snell Roundhand','"Snell Roundhand","Brush Script MT",cursive'],['Courier','"Courier New",monospace'],['Trebuchet','"Trebuchet MS",sans-serif']];
 var COLORS=['#ffffff','#000000','#ff3b30','#ff9500','#ffcc00','#34c759','#00c7be','#007aff','#af52de','#f5e6c8','#12306B'];
@@ -1545,8 +1554,7 @@ PANELS.crop=function(){
   var c=ui.crop||{ratio:'free',angle:0},h='<div class="chips">';
   RATIO_UI.forEach(function(r){h+='<button class="chip'+(c.ratio===r[0]?' on':'')+'" data-act="cropRatio" data-v="'+r[0]+'">'+r[1]+'</button>'});
   h+='</div>'+rng('u.crop.angle','Nắn thẳng (độ)',-45,45,0.5,1,0);
-  h+='<div class="row"><button class="bt sm" data-act="geom" data-v="rl">⟲ Xoay trái</button><button class="bt sm" data-act="geom" data-v="rr">⟳ Xoay phải</button><button class="bt sm" data-act="geom" data-v="fh">⇋ Lật ngang</button><button class="bt sm" data-act="geom" data-v="fv">⇅ Lật dọc</button></div>';
-  h+='<div class="row"><button class="bt grow" data-act="cropReset">Đặt lại</button><button class="bt pri grow" data-act="cropApply">Áp dụng cắt</button></div>';
+  h+='<div class="cropbtns"><div class="g"><button class="bt sm" data-act="geom" data-v="fh">Lật ngang</button><button class="bt sm" data-act="geom" data-v="fv">Lật dọc</button><button class="bt sm" data-act="geom" data-v="rl">Xoay trái</button><button class="bt sm" data-act="geom" data-v="rr">Xoay phải</button></div><div class="r"><button class="bt sm" data-act="cropReset">Đặt lại</button><button class="bt sm pri" data-act="cropApply">Áp dụng cắt</button></div></div>';
   return h;
 };
 PANELS.erase=function(){
@@ -1840,25 +1848,42 @@ function ratioVal(){
   var c=ui.crop,v=$('#view');if(!c||c.ratio==='free')return null;
   return c.ratio==='orig'?v.width/v.height:RATIOS[c.ratio];
 }
-function initCrop(){var pv=getPV();ui.crop={rect:{x:0,y:0,w:pv.w,h:pv.h},ratio:'free',angle:0,drag:null}}
+function initCrop(){var pv=getPV();ui.crop={rect:{x:0,y:0,w:pv.w,h:pv.h},ratio:'free',angle:0,drag:null,ox:0,oy:0,z:1}}
+/* ảnh nằm trong khung: giữ ảnh luôn phủ kín khung cắt */
+function clampPan(c,W,H){
+  var a=c.angle*Math.PI/180,k=coverScale(W,H,a)*c.z,cs=Math.cos(a),sn=Math.sin(a),r=c.rect,cx=W/2,cy=H/2;
+  var qs=[[r.x,r.y],[r.x+r.w,r.y],[r.x,r.y+r.h],[r.x+r.w,r.y+r.h]].map(function(p){var dx=p[0]-cx,dy=p[1]-cy;return [(dx*cs+dy*sn)/k,(-dx*sn+dy*cs)/k]});
+  var lx=Math.max.apply(null,qs.map(function(q){return q[0]}))-W/2,hx=Math.min.apply(null,qs.map(function(q){return q[0]}))+W/2;
+  var ly=Math.max.apply(null,qs.map(function(q){return q[1]}))-H/2,hy=Math.min.apply(null,qs.map(function(q){return q[1]}))+H/2;
+  var ox=(c.ox*cs+c.oy*sn)/k,oy=(-c.ox*sn+c.oy*cs)/k;
+  ox=lx>hx?(lx+hx)/2:clamp(ox,lx,hx);oy=ly>hy?(ly+hy)/2:clamp(oy,ly,hy);
+  c.ox=(ox*cs-oy*sn)*k;c.oy=(ox*sn+oy*cs)*k;
+}
+function cropFixedRect(){
+  var c=ui.crop,v=$('#view'),W=v.width,H=v.height,ra=ratioVal(),w=W,h=w/ra;
+  if(h>H){h=H;w=h*ra}
+  c.rect={x:(W-w)/2,y:(H-h)/2,w:w,h:h};
+}
 function cropHandles(r){return {tl:[r.x,r.y],tr:[r.x+r.w,r.y],bl:[r.x,r.y+r.h],br:[r.x+r.w,r.y+r.h],t:[r.x+r.w/2,r.y],b:[r.x+r.w/2,r.y+r.h],l:[r.x,r.y+r.h/2],r:[r.x+r.w,r.y+r.h/2]}}
 function hitCrop(p){
-  var c=ui.crop,v=$('#view'),sc=v.width/v.getBoundingClientRect().width,tol=30*sc,hs=cropHandles(c.rect),k,best=null,bd=1e9;
+  var c=ui.crop;if(c.ratio!=='free')return 'pan';
+  var v=$('#view'),sc=v.width/v.getBoundingClientRect().width,tol=30*sc,hs=cropHandles(c.rect),k,best=null,bd=1e9;
   for(k in hs){if(c.ratio!=='free'&&k.length===1)continue;var d=Math.hypot(p.x-hs[k][0],p.y-hs[k][1]);if(d<tol&&d<bd){bd=d;best=k}}
   if(best)return best;
   var r=c.rect;if(p.x>=r.x&&p.x<=r.x+r.w&&p.y>=r.y&&p.y<=r.y+r.h)return 'move';
-  return null;
+  return 'pan';
 }
 function dragCrop(c,p){
   var v=$('#view'),W=v.width,H=v.height,sc=W/v.getBoundingClientRect().width,mn=30*sc,d=c.drag,r0=d.r,dx=p.x-d.p.x,dy=p.y-d.p.y,h=d.h,ra=ratioVal();
-  if(h==='move'){c.rect={x:clamp(r0.x+dx,0,W-r0.w),y:clamp(r0.y+dy,0,H-r0.h),w:r0.w,h:r0.h};return}
+  if(h==='pan'){c.ox=d.ox+dx;c.oy=d.oy+dy;clampPan(c,W,H);scheduleRender(true);return}
+  if(h==='move'){c.rect={x:clamp(r0.x+dx,0,W-r0.w),y:clamp(r0.y+dy,0,H-r0.h),w:r0.w,h:r0.h};clampPan(c,W,H);return}
   var l=r0.x,t=r0.y,rt=r0.x+r0.w,b=r0.y+r0.h;
   if(ra===null){
     if(h.indexOf('l')>=0)l=clamp(l+dx,0,rt-mn);
     if(h.indexOf('r')>=0)rt=clamp(rt+dx,l+mn,W);
     if(h.indexOf('t')>=0)t=clamp(t+dy,0,b-mn);
     if(h.indexOf('b')>=0)b=clamp(b+dy,t+mn,H);
-    c.rect={x:l,y:t,w:rt-l,h:b-t};return;
+    c.rect={x:l,y:t,w:rt-l,h:b-t};clampPan(c,W,H);return;
   }
   var left=h.indexOf('l')>=0,top=h.indexOf('t')>=0,ax=left?rt:l,ay=top?b:t,nx=(left?l:rt)+dx,ny=(top?t:b)+dy;
   var w=Math.abs(nx-ax),hh=Math.abs(ny-ay);
@@ -1868,21 +1893,19 @@ function dragCrop(c,p){
   c.rect={x:left?ax-w:ax,y:top?ay-hh:ay,w:w,h:hh};
 }
 function setCropRatio(rv){
-  var c=ui.crop;c.ratio=rv;if(rv==='free')return;
-  var ra=ratioVal(),r=c.rect,cx=r.x+r.w/2,cy=r.y+r.h/2,w=r.w,h=r.h,v=$('#view');
-  if(w/h>ra)w=h*ra;else h=w/ra;
-  if(w>v.width){w=v.width;h=w/ra}if(h>v.height){h=v.height;w=h*ra}
-  c.rect={x:clamp(cx-w/2,0,v.width-w),y:clamp(cy-h/2,0,v.height-h),w:w,h:h};
+  var c=ui.crop;c.ratio=rv;
+  if(rv==='free')return;
+  cropFixedRect();var v=$('#view');clampPan(c,v.width,v.height);
 }
 function hasOverlays(){return doc.texts.length>0||doc.strokes.length>0}
 async function applyCrop(){
   var c=ui.crop,r=c.rect,b=doc.base,pv=getPV(),s=b.width/pv.w,cw=Math.round(r.w*s),ch=Math.round(r.h*s);
-  var full=r.w>=pv.w-1&&r.h>=pv.h-1&&Math.abs(c.angle)<0.01;
+  var full=r.w>=pv.w-1&&r.h>=pv.h-1&&Math.abs(c.angle)<0.01&&c.z<1.001&&Math.abs(c.ox)<1&&Math.abs(c.oy)<1;
   if(full){toast('Chưa chọn vùng cắt hoặc góc nắn');return}
   if(cw<8||ch<8){toast('Vùng cắt quá nhỏ');return}
   if(hasOverlays()&&!(await askConfirm('Cắt ảnh','Chữ và nét vẽ đã thêm sẽ bị xóa vì vị trí không còn khớp. Bạn có thể hoàn tác.','Cắt và xóa chúng',true)))return;
-  var a=c.angle*Math.PI/180,k=coverScale(b.width,b.height,a),nc=cv(cw,ch),x=nc.getContext('2d');
-  x.imageSmoothingQuality='high';x.translate(-r.x*s,-r.y*s);x.translate(b.width/2,b.height/2);x.rotate(a);x.scale(k,k);x.drawImage(b,-b.width/2,-b.height/2);
+  var a=c.angle*Math.PI/180,k=coverScale(b.width,b.height,a)*c.z,nc=cv(cw,ch),x=nc.getContext('2d');
+  x.imageSmoothingQuality='high';x.translate(-r.x*s,-r.y*s);x.translate(b.width/2+c.ox*s,b.height/2+c.oy*s);x.rotate(a);x.scale(k,k);x.drawImage(b,-b.width/2,-b.height/2);
   doc.texts=[];doc.strokes=[];ui.sel=-1;doc.p.beauty.st=[];
   setBase(nc);PIPE={};pendingFull=true;commit();initCrop();refreshPanel();scheduleRender();
 }
@@ -2023,14 +2046,15 @@ TOOLS.beauty={
   cancel:function(){if(ui.bcur){doc.p.beauty.st.pop();ui.bcur=null;ui.bpos=null;scheduleRender(true)}}
 };
 TOOLS.crop={
-  down:function(p){var c=ui.crop;if(!c||!c.rect)return;var h=hitCrop(p);c.drag=h?{h:h,p:p,r:Object.assign({},c.rect)}:null},
+  down:function(p){var c=ui.crop;if(!c||!c.rect)return;var h=hitCrop(p);c.drag=h?{h:h,p:p,r:Object.assign({},c.rect),ox:c.ox,oy:c.oy}:null},
   move:function(p){var c=ui.crop;if(!c||!c.drag)return;dragCrop(c,p);drawOv()},
   up:function(){if(ui.crop)ui.crop.drag=null},
   cancel:function(){if(ui.crop)ui.crop.drag=null}
 };
 
 /* ----- chạm, thu phóng ----- */
-var PT={},box=$('#stageBox');
+var PT={},box=$('#stageBox'),PEEK={adj:1,film:1,match:1,frame:1,more:1};
+function peekEnd(){if(!ui.peek)return;ui.peek=null;ui.cmp=false;pendingFull=true;scheduleRender()}
 function startPinch(){
   var ids=Object.keys(PT),a=PT[ids[0]],b=PT[ids[1]],br=box.getBoundingClientRect(),z=$('#zoom'),zl=parseFloat(z.style.left)||0,zt=parseFloat(z.style.top)||0;
   var mx=(a.x+b.x)/2,my=(a.y+b.y)/2;
@@ -2043,16 +2067,23 @@ box.addEventListener('pointerdown',function(e){
   try{box.setPointerCapture(e.pointerId)}catch(err){}
   PT[e.pointerId]={x:e.clientX,y:e.clientY};
   var n=Object.keys(PT).length;
-  if(n===2){cancelTool();startPinch();return}
+  if(n===2){peekEnd();cancelTool();if(ui.tab==='crop'&&ui.crop){var q=Object.keys(PT);ui.cpin={d:Math.hypot(PT[q[0]].x-PT[q[1]].x,PT[q[0]].y-PT[q[1]].y)||1,z:ui.crop.z};return}startPinch();return}
   if(n===1){
     var t=TOOLS[ui.tab];
     if(t&&!ui.cmp&&!(t.off&&t.off())){ui.tooling=true;t.down(toView(e),e)}
-    else if(ui.k>1)ui.panning={x:e.clientX,y:e.clientY,tx:ui.tx,ty:ui.ty};
+    else{
+      if(!t&&!ui.cmp&&PEEK[ui.tab]){ui.peek={x:e.clientX,y:e.clientY};ui.cmp=true;pendingFull=true;renderNow()}
+      if(ui.k>1)ui.panning={x:e.clientX,y:e.clientY,tx:ui.tx,ty:ui.ty};
+    }
   }
 });
 box.addEventListener('pointermove',function(e){
   if(!PT[e.pointerId])return;
   PT[e.pointerId]={x:e.clientX,y:e.clientY};
+  if(ui.cpin&&Object.keys(PT).length>=2){
+    var q=Object.keys(PT),c=ui.crop,v=$('#view');
+    c.z=clamp(ui.cpin.z*Math.hypot(PT[q[0]].x-PT[q[1]].x,PT[q[0]].y-PT[q[1]].y)/ui.cpin.d,1,8);clampPan(c,v.width,v.height);scheduleRender(true);return;
+  }
   if(ui.pinch&&Object.keys(PT).length>=2){
     var ids=Object.keys(PT),a=PT[ids[0]],b=PT[ids[1]],br=box.getBoundingClientRect(),p=ui.pinch;
     var mx=(a.x+b.x)/2,my=(a.y+b.y)/2,d=Math.hypot(a.x-b.x,a.y-b.y);
@@ -2060,6 +2091,7 @@ box.addEventListener('pointermove',function(e){
     if(ui.k<=1.001){ui.k=1;ui.tx=0;ui.ty=0}else{ui.tx=mx-br.left-p.zl-ui.k*p.ux;ui.ty=my-br.top-p.zt-ui.k*p.uy}
     applyZoom();return;
   }
+  if(ui.peek&&ui.panning&&Math.hypot(e.clientX-ui.peek.x,e.clientY-ui.peek.y)>8)peekEnd();
   if(ui.panning){ui.tx=ui.panning.tx+(e.clientX-ui.panning.x);ui.ty=ui.panning.ty+(e.clientY-ui.panning.y);applyZoom();return}
   var t=TOOLS[ui.tab];
   if(ui.tooling&&t&&t.move)t.move(toView(e),e);
@@ -2068,8 +2100,10 @@ function ptrEnd(e){
   if(!PT[e.pointerId])return;
   delete PT[e.pointerId];
   var n=Object.keys(PT).length;
-  if(n<2)ui.pinch=null;
+  if(n<2){ui.pinch=null;ui.cpin=null}
+  if(n>=1&&ui.peek)peekEnd();
   if(n===0){
+    peekEnd();
     var t=TOOLS[ui.tab];
     if(ui.tooling&&t&&t.up)t.up(toView(e),e);
     ui.tooling=false;ui.panning=null;
@@ -2230,6 +2264,7 @@ ACT.wmSaveDef=function(){var w=doc.p.wm;LOCAL.wm={on:w.on,text:w.text,logo:w.log
 $('#bPick').addEventListener('click',function(){$('#fileMain').value='';$('#fileMain').click()});
 $('#bCam').addEventListener('click',function(){openCam()});
 $('#fileCam').addEventListener('change',function(e){var f=e.target.files&&e.target.files[0];if(f)loadFile(f)});
+$('#bOpen').innerHTML='<img alt="" draggable="false" src="data:image/png;base64,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">';
 $('#bOpen').addEventListener('click',async function(){
   if(!doc.base){$('#fileMain').value='';$('#fileMain').click();return}
   var r=await dialog('<h3>Ảnh đang sửa</h3><div class="dbtn" style="flex-direction:column"><button class="bt" data-r="home">Về trang chủ</button><button class="bt" data-r="go">Tiếp tục</button></div>');
@@ -2540,7 +2575,7 @@ $('#bCollage').addEventListener('click',openCollage);
 /* ===== Chụp ảnh trực tiếp, xem trước màu film ===== */
 var CAM={lens:'main',ultra:null,z:1,stream:null,facing:'environment',fc:0,fi:-1,t:1,raf:0,last:0,vid:null,off:null};
 function camHtml(){
-  var h='<div class="ct"><button class="bt sm" id="camX">Thoát</button><div class="ttl">Chụp ảnh</div><button class="bt sm" id="camFlip">Đổi camera</button></div><div class="vf"><div id="camBox"><canvas id="camV"></canvas><div id="camGrid"'+(CAM.grid?'':' hidden')+'></div><div id="camFlash"></div><div id="camZ">'+(CAM.facing==='environment'?[0.5,1,2,3,5]:[1,2,3,5]).map(function(z){return '<button data-z="'+z+'" class="'+(Math.abs(CAM.z-z)<0.05?'on':'')+'">'+String(z).replace('.',',')+'x</button>'}).join('')+'</div><div id="camInfo"></div></div></div><div class="cp"><div class="shot"><button class="bt sm" id="camAlbum">Ảnh</button><button id="camShot" aria-label="Chụp"></button><button class="bt sm'+(CAM.grid?' on':'')+'" id="camGr">Lưới</button></div><div class="chips" id="camCat">';
+  var h='<div class="ct"><button class="bt sm" id="camX">Thoát</button><div class="ttl">Chụp ảnh</div><button class="bt sm" id="camFlip">Đổi camera</button></div><div class="vf"><div id="camBox"><canvas id="camV"></canvas><div id="camGrid"'+(CAM.grid?'':' hidden')+'></div><div id="camFlash"></div><div id="camZ">'+(CAM.facing==='environment'?[0.5,1,2,3,5]:[1,2,3,5]).map(function(z){return '<button data-z="'+z+'" class="'+(Math.abs(CAM.z-z)<0.05?'on':'')+'">'+String(z).replace('.',',')+'x</button>'}).join('')+'</div><div id="camInfo"></div></div></div><div class="cp"><div class="shot"><button class="bt sm" id="camAlbum">Ảnh</button><button id="camShot" aria-label="Chụp"></button><button class="bt sm" id="camPk">Gốc</button><button class="bt sm'+(CAM.grid?' on':'')+'" id="camGr">Lưới</button></div><div class="chips" id="camCat">';
   FILM.forEach(function(c,i){h+='<button class="chip'+(CAM.fc===i?' on':'')+'" data-cc="'+i+'">'+esc(c.name)+'</button>'});
   h+='</div><div class="chips" id="camStrip"><button class="chip'+(CAM.fi<0?' on':'')+'" data-cf="-1">Gốc</button>';
   FILM[CAM.fc].list.forEach(function(p,i){h+='<button class="chip'+(CAM.fi===i&&CAM.fcSel===CAM.fc?' on':'')+'" data-cf="'+i+'">'+esc(p.name)+'</button>'});
@@ -2567,7 +2602,7 @@ async function camSetZoom(z){
   CAM.zf=CAM.lens==='ultra'?z/0.5:z;CAM.hw=false;
   var tr=CAM.stream&&CAM.stream.getVideoTracks()[0],cp=tr&&tr.getCapabilities&&tr.getCapabilities();
   if(CAM.lens==='main'&&cp&&cp.zoom&&cp.zoom.max>=z){try{await tr.applyConstraints({advanced:[{zoom:Math.max(cp.zoom.min||1,z)}]});CAM.hw=true}catch(e){CAM.hw=false}}
-  camMark(z);
+  camMark(z);camVidFx();
   var zi=$('#camInfo');if(zi)zi.textContent=(Math.round(z*10)/10)+'x · '+(CAM.vid?CAM.vid.videoWidth+'×'+CAM.vid.videoHeight:'')+(CAM.lens==='ultra'?' · góc rộng':'')+(CAM.hw?' · zoom máy':'');
 }
 function camFit(){
@@ -2583,21 +2618,31 @@ function camRender(){
   $('#camCat').scrollLeft=keepC;
   CAM.cv=$('#camV');camFit();if(CAM.vid&&CAM.vid.videoWidth)camSetZoom(CAM.z);
   $('#camV').style.transform=CAM.facing==='user'?'scaleX(-1)':'none';
+  camAttach();
+}
+function camAttach(){
+  var bx=$('#camBox'),v=CAM.vid;if(!bx||!v)return;
+  v.id='camVid';if(v.parentNode!==bx)bx.insertBefore(v,bx.firstChild);
+  camVidFx();
+}
+function camVidFx(){
+  var v=CAM.vid,cv=$('#camV');if(!v)return;
+  var zf=(CAM.hw?1:(CAM.zf||CAM.z))||1,mir=CAM.facing==='user'?' scaleX(-1)':'';
+  v.style.transform='scale('+zf+')'+mir;
+  var film=CAM.fi>=0&&!CAM.peek;
+  if(cv)cv.style.visibility=film?'visible':'hidden';
 }
 function camCrop(v){var vw=v.videoWidth,vh=v.videoHeight,z=CAM.hw?1:(CAM.zf||CAM.z),sw=Math.min(vw,vh*3/4)/z,sh=sw*4/3;return [(vw-sw)/2,(vh-sh)/2,sw,sh]}
 function camTick(ts){
   CAM.raf=requestAnimationFrame(camTick);
-  var v=CAM.vid,cv=$('#camV');if(!v||!cv||!v.videoWidth||ts-CAM.last<60)return;
+  var v=CAM.vid,cv=$('#camV');if(!v||!cv||!v.videoWidth||ts-CAM.last<45)return;
+  if(CAM.fi<0||CAM.peek)return;
   CAM.last=ts;
-  var cr=camCrop(v),w=360,h=480;
-  if(!CAM.off)CAM.off=document.createElement('canvas');
-  if(CAM.off.width!==w||CAM.off.height!==h){CAM.off.width=w;CAM.off.height=h}
+  var cr=camCrop(v),w=450,h=600;
   if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h}
-  var x=CAM.off.getContext('2d',{willReadFrequently:true});x.drawImage(v,cr[0],cr[1],cr[2],cr[3],0,0,w,h);
-  var cx=cv.getContext('2d');
-  if(CAM.fi<0){cx.drawImage(CAM.off,0,0);return}
-  var id=x.getImageData(0,0,w,h),out=colorPass(id.data,w,h,combine({adj:defP().adj,film:{c:CAM.fcSel,i:CAM.fi,t:CAM.t}}),null);
-  cx.putImageData(new ImageData(out,w,h),0,0);
+  var cx=cv.getContext('2d',{willReadFrequently:true});cx.imageSmoothingQuality='high';cx.drawImage(v,cr[0],cr[1],cr[2],cr[3],0,0,w,h);
+  var id=cx.getImageData(0,0,w,h),q=combine({adj:defP().adj,film:{c:CAM.fcSel,i:CAM.fi,t:CAM.t}});q.gr=0;
+  cx.putImageData(new ImageData(colorPass(id.data,w,h,q,null),w,h),0,0);
 }
 async function camStart(){
   if(CAM.stream){CAM.stream.getTracks().forEach(function(t){t.stop()});CAM.stream=null}
@@ -2618,12 +2663,18 @@ async function camFindUltra(){
 }
 async function openCam(){
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$('#fileCam').value='';$('#fileCam').click();return}
-  CAM.z=1;CAM.zf=1;CAM.lens='main';CAM.hw=false;CAM.fc=0;CAM.fi=-1;CAM.fcSel=0;CAM.t=1;CAM.grid=false;CAM.busy=false;
+  CAM.z=1;CAM.zf=1;CAM.lens='main';CAM.hw=false;CAM.fc=0;CAM.fi=-1;CAM.fcSel=0;CAM.t=1;CAM.grid=false;CAM.busy=false;CAM.peek=false;
   var o=document.createElement('div');o.id='camOv';document.body.appendChild(o);
   var v=document.createElement('video');v.setAttribute('playsinline','');v.muted=true;CAM.vid=v;
   camRender();
   try{await camStart()}catch(e){closeCam();toast('Không mở được camera. Hãy cho phép truy cập camera, hoặc dùng ảnh chụp từ máy.');$('#fileCam').value='';$('#fileCam').click();return}
   await camFindUltra();camRender();CAM.raf=requestAnimationFrame(camTick);camSetZoom(1);
+  (function(){
+    function on(e){var b=e.target.closest&&e.target.closest('#camPk');if(!b)return;e.preventDefault();CAM.peek=true;b.classList.add('on');camVidFx()}
+    function off(){if(!CAM.peek)return;CAM.peek=false;var b=$('#camPk');if(b)b.classList.remove('on');camVidFx();CAM.last=0}
+    o.addEventListener('pointerdown',on);o.addEventListener('pointerup',off);o.addEventListener('pointercancel',off);o.addEventListener('pointerleave',off,true);
+    o.addEventListener('contextmenu',function(e){if(e.target.closest('#camPk'))e.preventDefault()});
+  })();
   o.addEventListener('click',async function(e){
     var b=e.target.closest('button');if(!b)return;
     if(b.id==='camX')closeCam();
@@ -2672,7 +2723,7 @@ async function camShot(){
   if(CAM.facing==='user'){x.translate(c.width,0);x.scale(-1,1)}
   x.drawImage(v,cr[0],cr[1],cr[2],cr[3],0,0,c.width,c.height);
   try{
-    if(CAM.fi>=0){
+    if(CAM.fi>=0&&!CAM.peek){
       x.setTransform(1,0,0,1,0,0);
       var id=x.getImageData(0,0,c.width,c.height),out=colorPass(id.data,c.width,c.height,combine({adj:defP().adj,film:{c:CAM.fcSel,i:CAM.fi,t:CAM.t}}),null);
       x.putImageData(new ImageData(out,c.width,c.height),0,0);
