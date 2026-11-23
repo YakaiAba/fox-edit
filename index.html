@@ -216,7 +216,7 @@ select.sel,input.txt{width:100%;border:1.5px solid var(--ink);border-radius:var(
 <div id="busy" hidden><div class="sp"></div><div id="busyMsg">Đang xử lý…</div><div class="pb"><div id="busyBar"></div></div></div>
 <script>
 'use strict';
-var APP_VER='3.27 (23/11/2026)';
+var APP_VER='3.28 (23/11/2026)';
 function $(s,r){return (r||document).querySelector(s)}
 function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
 function clamp(v,a,b){return v<a?a:(v>b?b:v)}
@@ -229,7 +229,7 @@ function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2
 var K_LOCAL='chinhanh.local',K_SETS='chinhanh.sets',K_COLORS='chinhanh.colors';
 function lsGet(k,d){try{var s=localStorage.getItem(k);return s?JSON.parse(s):d}catch(e){return d}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){toast('Không lưu được: bộ nhớ máy đầy');return false}}
-var LOCAL=Object.assign({maxEdge:3000,fmt:'jpg',q:0.92,wm:null},lsGet(K_LOCAL,{}));
+var LOCAL=Object.assign({maxEdge:3000,fmt:'jpg',q:0.92,wm:null,lang:'en'},lsGet(K_LOCAL,{}));
 function saveLocal(){lsSet(K_LOCAL,LOCAL)}
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
 
@@ -317,62 +317,62 @@ function hueOff(h){ /* màu thuần theo góc sắc độ, trừ đi mức xám 
  sh/hi = góc-màu:mức cho vùng tối/vùng sáng, gs dịch màu lá (+vàng/-lục lam), bs dịch màu trời (+lam ngọc/-tím),
  gr hạt, vg tối viền, mono đen trắng */
 var FILM_RAW=[
-{id:"kd",name:"Kodak",list:[
-"Kodak Portra 400 v2|ct.084 fd.094 hl.12 sat-.09 wm.072 tn-.015 sh215:.05 hi50:.03 gr.045",
-"Kodak Portra 160 v2|ct.118 fd.04 hl.05 sat-.18 wm.108 tn-.003 sh215:.05 hi50:.03 gr.02",
-"Kodak Portra 800 v3|ct.072 fd.061 hl.2 sat-.045 wm.068 tn-.012 sh215:.05 hi50:.03 gr.06",
-"Kodak Gold 200|ct.096 fd.05 hl.18 sat-.045 wm.108 tn-.003 sh215:.05 hi50:.03 gr.045",
-"Kodak Ultramax 400|ct.172 fd.04 hl.05 wm.072 tn-.012 sh215:.05 hi50:.03 gr.06",
-"Kodak Ektar 100|ct.136 fd.084 hl.05 wm.058 tn.009 sh215:.05 hi50:.03",
-"Kodak Royal Gold 400|ct.142 fd.06 hl.16 sat.16 wm.056 tn.024 gs-.12 sh175:.07 hi35:.06 gr.045",
-"Kodak Vericolor Warm|ct.032 fd.072 hl.08 sat.09 wm.184 tn-.003 sh20:.04 hi40:.07 gr.02",
-"1976 Kodak|ct.106 fd.06 hl.05 sat.18 wm.104 tn-.018 sh20:.04 hi40:.07 gr.045",
-"Reggie's Portra|ct.106 fd.062 hl.09 sat-.09 wm.072 tn-.006 sh215:.05 hi50:.03 gr.02",
-"Kodachrome 64|ct.154 fd.04 hl.05 sat-.09 wm.084 tn-.009 sh215:.05 hi50:.03 gr.02",
-"Kodachrome 25|ct.138 fd.061 hl.12 sat-.135 wm.072 tn-.006 sh215:.05 hi50:.03"]},
-{id:"fj",name:"Fujicolor & Agfa",list:[
-"Fujicolor Superia 100|ct.122 fd.094 hl.09 sat.025 wm.012 tn-.003 gs-.12 sh175:.07 hi35:.06 gr.02",
-"Superia Xtra 400|ct.136 fd.082 hl.12 sat.16 wm.096 tn-.006 gs-.12 sh175:.07 hi35:.06 gr.045",
-"Fujicolor Natura 1600|ct.136 fd.06 hl.18 sat-.11 wm.012 tn-.009 gs-.12 sh175:.07 hi35:.06 gr.06",
-"Fujicolor Pro 400H|ct.16 fd.06 hl.2 sat.16 wm.024 tn-.012 gs-.12 sh175:.07 hi35:.06 gr.045",
-"Fujicolor 100 Industrial|ct.052 fd.02 hl.12 sat-.005 wm.096 gr.02",
-"Fujicolor Reala 100|ct.118 fd.082 hl.16 sat-.02 gs-.12 sh175:.07 hi35:.06 gr.02",
-"Easy Reala Ace|ct.028 fd.02 hl.16 sat.04 gr.02",
-"PRO Negative 160C|ct.014 fd.032 hl.09 sat.22 wm.036 tn-.003 gr.02",
-"Agfa Ultra 100 v2|ct.078 fd.07 hl.12 sat.135 wm.092 tn-.018 sh20:.04 hi40:.07 gr.035"]},
-{id:"sl",name:"Slide & Chrome",list:[
-"Vivid Velvia|ct.114 fd.042 hl.16 sat.4 vib.06 wm.048 tn-.006 gr.02",
-"Expired Velvia|ct.136 fd.104 hl.12 sat.115 wm-.072 tn.021 gs-.12 sh175:.07 hi35:.06 gr.02",
-"Standard Provia|ct.038 fd.02 hl.12 sat.13 wm-.036 tn-.009 gr.02",
-"Thommy's Ektachrome|ct.104 fd.05 sat.045 wm.012 tn.006 sh20:.04 hi40:.07 gr.02",
-"Pacific Blues|ct.154 fd.06 hl.2 sat.16 wm.06 tn-.006 gs-.12 sh175:.07 hi35:.06 gr.06",
-"1960 Chrome|ct.192 fd.062 hl.2 sat-.25 wm-.016 tn-.018 gr.06"]},
+{id:"kd",name:"Warm & Soft",list:[
+"Creamy Skin|ct.084 fd.094 hl.12 sat-.09 wm.072 tn-.015 sh215:.05 hi50:.03 gr.045",
+"Pastel Skin|ct.118 fd.04 hl.05 sat-.18 wm.108 tn-.003 sh215:.05 hi50:.03 gr.02",
+"Golden Dusk|ct.072 fd.061 hl.2 sat-.045 wm.068 tn-.012 sh215:.05 hi50:.03 gr.06",
+"Honey Gold|ct.096 fd.05 hl.18 sat-.045 wm.108 tn-.003 sh215:.05 hi50:.03 gr.045",
+"Everyday Bright|ct.172 fd.04 hl.05 wm.072 tn-.012 sh215:.05 hi50:.03 gr.06",
+"Rich Punch|ct.136 fd.084 hl.05 wm.058 tn.009 sh215:.05 hi50:.03",
+"Royal Amber|ct.142 fd.06 hl.16 sat.16 wm.056 tn.024 gs-.12 sh175:.07 hi35:.06 gr.045",
+"Warm Studio|ct.032 fd.072 hl.08 sat.09 wm.184 tn-.003 sh20:.04 hi40:.07 gr.02",
+"Retro 1976|ct.106 fd.06 hl.05 sat.18 wm.104 tn-.018 sh20:.04 hi40:.07 gr.045",
+"Soft Peach|ct.106 fd.062 hl.09 sat-.09 wm.072 tn-.006 sh215:.05 hi50:.03 gr.02",
+"Heritage Red|ct.154 fd.04 hl.05 sat-.09 wm.084 tn-.009 sh215:.05 hi50:.03 gr.02",
+"Heritage Fine|ct.138 fd.061 hl.12 sat-.135 wm.072 tn-.006 sh215:.05 hi50:.03"]},
+{id:"fj",name:"Fresh & Cool",list:[
+"Fresh Green|ct.122 fd.094 hl.09 sat.025 wm.012 tn-.003 gs-.12 sh175:.07 hi35:.06 gr.02",
+"Street Green|ct.136 fd.082 hl.12 sat.16 wm.096 tn-.006 gs-.12 sh175:.07 hi35:.06 gr.045",
+"Night Soft|ct.136 fd.06 hl.18 sat-.11 wm.012 tn-.009 gs-.12 sh175:.07 hi35:.06 gr.06",
+"Mint Pastel|ct.16 fd.06 hl.2 sat.16 wm.024 tn-.012 gs-.12 sh175:.07 hi35:.06 gr.045",
+"Plain Daylight|ct.052 fd.02 hl.12 sat-.005 wm.096 gr.02",
+"True Daylight|ct.118 fd.082 hl.16 sat-.02 gs-.12 sh175:.07 hi35:.06 gr.02",
+"Easy Clear|ct.028 fd.02 hl.16 sat.04 gr.02",
+"Clean Studio|ct.014 fd.032 hl.09 sat.22 wm.036 tn-.003 gr.02",
+"Vivid Pop|ct.078 fd.07 hl.12 sat.135 wm.092 tn-.018 sh20:.04 hi40:.07 gr.035"]},
+{id:"sl",name:"Vivid Chrome",list:[
+"Vivid Bloom|ct.114 fd.042 hl.16 sat.4 vib.06 wm.048 tn-.006 gr.02",
+"Faded Bloom|ct.136 fd.104 hl.12 sat.115 wm-.072 tn.021 gs-.12 sh175:.07 hi35:.06 gr.02",
+"Neutral Chrome|ct.038 fd.02 hl.12 sat.13 wm-.036 tn-.009 gr.02",
+"Cool Chrome|ct.104 fd.05 sat.045 wm.012 tn.006 sh20:.04 hi40:.07 gr.02",
+"Ocean Blues|ct.154 fd.06 hl.2 sat.16 wm.06 tn-.006 gs-.12 sh175:.07 hi35:.06 gr.06",
+"Retro Chrome|ct.192 fd.062 hl.2 sat-.25 wm-.016 tn-.018 gr.06"]},
 {id:"cn",name:"Cinema & Night",list:[
-"Vintage Eterna|ct-.016 fd.062 sat-.03 wm.084 tn-.009 gr.045",
-"Kodak Vision3 250D v2|ct.142 fd.06 hl.05 sat-.045 wm-.02 tn-.015 sh20:.04 hi40:.07 gr.045",
-"CineStill 800T|ct-.066 fd.06 hl.12 sat.06 wm-.084 tn-.03 gr.06",
-"CineStill 400D v2|ct-.078 fd.01 hl.13 sat.09 wm-.112 tn.006 ex.02 gr.045",
-"Pushed CineStill 800T|ct.234 fd.04 hl.14 sat-.205 wm-.08 tn-.012 gr.06",
-"RedScale|ct.176 fd.05 hl.05 sat.16 wm.35 gs-.12 sh175:.07 hi35:.06 gr.045",
-"Nature Neon|ct.12 fd.05 hl.12 sat-.045 wm.044 tn-.009 sh215:.05 hi50:.03 gr.02"]},
+"Soft Cinema|ct-.016 fd.062 sat-.03 wm.084 tn-.009 gr.045",
+"Daylight Cinema|ct.142 fd.06 hl.05 sat-.045 wm-.02 tn-.015 sh20:.04 hi40:.07 gr.045",
+"Tungsten Glow|ct-.066 fd.06 hl.12 sat.06 wm-.084 tn-.03 gr.06",
+"Daylight Glow|ct-.078 fd.01 hl.13 sat.09 wm-.112 tn.006 ex.02 gr.045",
+"Tungsten Push|ct.234 fd.04 hl.14 sat-.205 wm-.08 tn-.012 gr.06",
+"Red Wash|ct.176 fd.05 hl.05 sat.16 wm.35 gs-.12 sh175:.07 hi35:.06 gr.045",
+"Wild Neon|ct.12 fd.05 hl.12 sat-.045 wm.044 tn-.009 sh215:.05 hi50:.03 gr.02"]},
 {id:"vt",name:"Vintage & Summer",list:[
-"Nostalgia Negative|ct.042 fd.07 hl.16 sat.18 wm.152 sh20:.04 hi40:.07 gr.045",
-"Timeless Negative|ct.048 fd.114 hl.12 sat-.135 wm.14 tn-.003 sh20:.04 hi40:.07 gr.02",
-"Summer of 1960|ct.114 fd.07 hl.12 sat.135 wm.094 tn-.024 sh20:.04 hi40:.07 gr.045",
-"Nostalgic Americana|ct.022 fd.093 hl.09 sat-.09 wm.116 tn-.018 sh20:.04 hi40:.07 gr.06",
-"Vintage Bronze|ct.226 fd.052 hl.05 sat-.34 wm.168 tn-.006 gr.035",
-"California Summer|fd.092 hl.2 sat.18 wm.188 tn-.021 sh20:.04 hi40:.07 gr.02",
-"Texas Sun|ct.1 fd.051 hl.13 wm.136 tn-.012 sh215:.05 hi50:.03 gr.045",
-"Creamy Color|ct.226 fd.06 hl.12 sat-.2 wm.104 tn.03 gs-.12 sh175:.07 hi35:.06 gr.06",
-"Copenhagen Negative|ct.148 fd.104 hl.12 sat.16 wm.008 tn.006 gs-.12 sh175:.07 hi35:.06 gr.045"]},
+"Faded Memory|ct.042 fd.07 hl.16 sat.18 wm.152 sh20:.04 hi40:.07 gr.045",
+"Timeless Soft|ct.048 fd.114 hl.12 sat-.135 wm.14 tn-.003 sh20:.04 hi40:.07 gr.02",
+"Summer Haze|ct.114 fd.07 hl.12 sat.135 wm.094 tn-.024 sh20:.04 hi40:.07 gr.045",
+"Dusty Road|ct.022 fd.093 hl.09 sat-.09 wm.116 tn-.018 sh20:.04 hi40:.07 gr.06",
+"Bronze Glow|ct.226 fd.052 hl.05 sat-.34 wm.168 tn-.006 gr.035",
+"Golden Coast|fd.092 hl.2 sat.18 wm.188 tn-.021 sh20:.04 hi40:.07 gr.02",
+"Desert Sun|ct.1 fd.051 hl.13 wm.136 tn-.012 sh215:.05 hi50:.03 gr.045",
+"Vanilla Cream|ct.226 fd.06 hl.12 sat-.2 wm.104 tn.03 gs-.12 sh175:.07 hi35:.06 gr.06",
+"Nordic Calm|ct.148 fd.104 hl.12 sat.16 wm.008 tn.006 gs-.12 sh175:.07 hi35:.06 gr.045"]},
 {id:"bw",name:"Black & White",list:[
-"Kodak Tri-X 400|mono1 ct.17 fd.01 hl.05 gr.06",
-"Ilford HP5 Plus 400|mono1 ct.1 fd.02 hl.16 gr.06",
-"Kodak T-Max 100 Hard Tone|mono1 ct.14 fd.01 hl.05 gr.035",
-"Ilford FP4 Plus 125|mono1 ct.098 fd.043 hl.07 gr.035",
-"Agfa Scala|mono1 ct.18 gr.02",
-"Classic B&W|mono1 ct.212 fd.01 hl.05 gr.06",
-"Kodak T-Max P3200|mono1 ct.154 fd.02 hl.12 gr.06"]}
+"Gritty Mono|mono1 ct.17 fd.01 hl.05 gr.06",
+"Classic Mono 400|mono1 ct.1 fd.02 hl.16 gr.06",
+"Hard Contrast Mono|mono1 ct.14 fd.01 hl.05 gr.035",
+"Fine Mono 125|mono1 ct.098 fd.043 hl.07 gr.035",
+"Slide Mono|mono1 ct.18 gr.02",
+"Pure Mono|mono1 ct.212 fd.01 hl.05 gr.06",
+"Night Grain Mono|mono1 ct.154 fd.02 hl.12 gr.06"]}
 ];
 var FILM=FILM_RAW.map(function(c){
   return {id:c.id,name:c.name,list:c.list.map(function(s){
@@ -385,7 +385,7 @@ var FILM=FILM_RAW.map(function(c){
     return o;
   })};
 });
-FILM.unshift({id:'all',name:'Tất cả',list:FILM.reduce(function(a,c){return a.concat(c.list)},[])});
+FILM.unshift({id:'all',name:'All',list:FILM.reduce(function(a,c){return a.concat(c.list)},[])});
 function filmOf(f){return f&&f.i>=0&&FILM[f.c]?(FILM[f.c].list[f.i]||null):null}
 
 /* Gộp thông số chỉnh tay + film thành một bộ */
@@ -2340,12 +2340,12 @@ function diagInfo(){
 }
 $('#bSet').addEventListener('click',function(){
   var me=LOCAL.maxEdge;
-  dialog('<h3>Cài đặt</h3><h4>Cạnh dài tối đa khi mở ảnh</h4><div class="chips" id="meChips">'+[2048,3000,4096].map(function(v){return '<button class="chip'+(me===v?' on':'')+'" data-e="'+v+'">'+v+' px</button>'}).join('')+'</div>'+
+  dialog('<h3>Cài đặt</h3><h4>Ngôn ngữ</h4><div class="chips" id="lgChips">'+[['en','English'],['vi','Tiếng Việt']].map(function(l){return '<button class="chip'+(LOCAL.lang===l[0]?' on':'')+'" data-l="'+l[0]+'">'+l[1]+'</button>'}).join('')+'</div><h4>Cạnh dài tối đa khi mở ảnh</h4><div class="chips" id="meChips">'+[2048,3000,4096].map(function(v){return '<button class="chip'+(me===v?' on':'')+'" data-e="'+v+'">'+v+' px</button>'}).join('')+'</div>'+
     '<p class="note">Áp dụng cho ảnh mở sau này. Ảnh càng lớn càng nặng máy; 3000 px là mức cân bằng cho iPhone.</p>'+
     '<h4>Bộ chỉnh riêng và màu mẫu</h4><div class="row"><button class="bt sm" data-r="exp">Xuất ra file</button><button class="bt sm" data-r="imp">Nhập từ file</button></div>'+
     '<h4>Lưu ý</h4><p class="note">Khi chụp, thiết bị tự hiện biểu tượng quay phim màu đỏ ở góc trái trên và chấm xanh ở góc phải. Đó là chỉ báo của hệ thống khi một ứng dụng dùng camera. Ứng dụng này không bỏ được, và chúng tự tắt khi thoát màn hình chụp.</p>'+
     '<p class="ver">Phiên bản '+APP_VER+'<br>'+diagInfo()+'</p><div class="dbtn"><button class="bt pri" data-r="ok">Thoát</button></div>',
-    function(m){m.addEventListener('click',function(e){var c=e.target.closest('[data-e]');if(c){me=Number(c.getAttribute('data-e'));$$('#meChips .chip',m).forEach(function(x){x.classList.toggle('on',x===c)})}})}
+    function(m){m.addEventListener('click',function(e){var lg=e.target.closest('[data-l]');if(lg){setLang(lg.getAttribute('data-l'));$$('#lgChips .chip',m).forEach(function(x){x.classList.toggle('on',x===lg)});return}var c=e.target.closest('[data-e]');if(c){me=Number(c.getAttribute('data-e'));$$('#meChips .chip',m).forEach(function(x){x.classList.toggle('on',x===c)})}})}
   ).then(async function(r){
     if(me!==LOCAL.maxEdge){LOCAL.maxEdge=me;saveLocal()}
     if(r.v==='exp'){
@@ -2822,6 +2822,359 @@ async function camShot(){
   if(sf)sf.remove();if(tc){try{tr.applyConstraints({advanced:[{torch:false}]})}catch(e){}}
   CAM.busy=false;
 }
+var EN={
+"Chọn ảnh": "Choose photo",
+"Chụp ảnh": "Take photo",
+"Cài đặt": "Settings",
+"Ghép nhiều ảnh": "Photo collage",
+"Giữ để xem ảnh gốc": "Hold to see original",
+"Hoàn tác": "Undo",
+"Làm lại": "Redo",
+"Lưu": "Save",
+"Về trang chủ": "Back to home",
+"Đang xử lý…": "Processing…",
+"Ảnh được xử lý ngay trong máy, không gửi đi đâu. Giữ nút nửa tròn trên cùng để xem ảnh gốc.": "Photos are processed on your device and never uploaded. Hold the half-circle button at the top to see the original.",
+"⤢ Vừa khung": "⤢ Fit",
+"Bỏ qua": "Skip",
+"Không lưu được: bộ nhớ máy đầy": "Could not save: device storage is full",
+"Không đọc được ảnh": "Could not read the photo",
+"Xác nhận": "Confirm",
+"Không mở được ảnh này": "Could not open this photo",
+"Xuất ảnh lỗi: ảnh quá lớn hoặc hết bộ nhớ": "Export failed: image too large or out of memory",
+"Đang mở ảnh…": "Opening photo…",
+"Đang xuất ảnh…": "Exporting photo…",
+"Đã tải ảnh về máy": "Photo downloaded",
+"Tất cả": "All",
+"đóng": "close",
+"Bo góc": "Corners",
+"Bo góc ảnh": "Round corners",
+"Bão hòa": "Saturation",
+"Bút": "Pen",
+"Bấm “Thêm chữ”, rồi kéo chữ trên ảnh để di chuyển. Bấm vào chữ để chọn lại.": "Tap “Add text”, then drag the text on the photo to move it. Tap a text to select it again.",
+"Bỏ khớp": "Remove match",
+"Bỏ logo": "Remove logo",
+"Bỏ vùng đã tô": "Clear painted area",
+"Bộ chỉnh riêng": "My presets",
+"Bộ chỉnh riêng và màu mẫu": "My presets and sample colors",
+"Bộ của tôi": "My sets",
+"Bụi xước": "Dust & scratches",
+"Chi tiết": "Detail",
+"Cháy film": "Film burn",
+"Chưa chọn vùng cắt hoặc góc nắn": "No crop area or straighten angle chosen",
+"Chưa có chữ nào được sao chép": "No text has been copied",
+"Chưa có chữ để sao chép": "No text to copy",
+"Chưa có nội dung để xác nhận": "Nothing to confirm yet",
+"Chưa có ảnh để lưu": "No photo to save",
+"Chưa tô vùng nào để xóa": "Paint an area to erase first",
+"Chưa đọc được chữ nào. Bạn có thể gõ trực tiếp vào trang.": "No text was read yet. You can type directly on the page.",
+"Chất lượng": "Quality",
+"Chỉnh": "Adjust",
+"Chọn logo": "Choose logo",
+"Chọn một ảnh để bắt đầu chỉnh sửa.": "Choose a photo to start editing.",
+"Chọn ảnh mẫu": "Choose sample photo",
+"Chọn ảnh mẫu: ảnh đang sửa sẽ được đổi màu cho giống ảnh mẫu (tông màu, độ sáng, độ đậm nhạt).": "Choose a sample photo: your photo will be recolored to look like it (tone, brightness, contrast).",
+"Chữ": "Text",
+"Chữ nhật": "Rectangle",
+"Chữ và nét vẽ đã thêm sẽ bị xóa vì vị trí không còn khớp. Bạn có thể hoàn tác.": "Added text and drawings will be removed because their positions no longer match. You can undo.",
+"Có lỗi nhỏ, đã khôi phục. Thử lại nhé": "A small error occurred and was recovered. Please try again.",
+"Cạnh dài tối đa khi mở ảnh": "Maximum long edge when opening photos",
+"Cắt": "Crop",
+"Cắt và xóa chúng": "Crop and remove them",
+"Cắt ảnh": "Crop photo",
+"Cỡ": "Size",
+"Cỡ bút": "Pen size",
+"Cỡ chữ": "Text size",
+"Cỡ cọ": "Brush size",
+"Dán": "Paste",
+"Dạ quang": "Glow",
+"Dấu ngày": "Date stamp",
+"Dấu tên / logo": "Name / logo mark",
+"File này không phải bản xuất của app": "This file is not an export from this app",
+"Giữ nguyên độ sáng của ảnh": "Keep the photo's brightness",
+"Giữa": "Center",
+"Gốc": "Original",
+"Hiện dấu tên": "Show name mark",
+"Hiệu ứng": "Effects",
+"In đậm": "Bold",
+"Khi chụp, thiết bị tự hiện biểu tượng quay phim màu đỏ ở góc trái trên và chấm xanh ở góc phải. Đó là chỉ báo của hệ thống khi một ứng dụng dùng camera. Ứng dụng này không bỏ được, và chúng tự tắt khi thoát màn hình chụp.": "While shooting, the device shows a red recording icon at the top left and a green dot at the top right. These are system indicators shown whenever an app uses the camera. This app cannot remove them, and they turn off when you leave the camera screen.",
+"Khoanh vùng": "Select area",
+"Không": "None",
+"Không nhận dạng được. Kiểm tra kết nối mạng (lần đầu cần tải dữ liệu) rồi thử lại.": "Could not recognize text. Check your network connection (data must be downloaded the first time) and try again.",
+"Không nhận ra chữ nào trong ảnh.": "No text found in the photo.",
+"Không xử lý được ảnh": "Could not process the photo",
+"Không đọc được bộ nhớ tạm. Hãy dán thủ công vào ô văn bản": "Could not read the clipboard. Please paste manually into the text box",
+"Không đọc được logo": "Could not read the logo",
+"Không đọc được ảnh mẫu": "Could not read the sample photo",
+"Khử nhiễu": "Denoise",
+"Lóa sáng": "Light leak",
+"Lưu làm mặc định cho ảnh sau": "Save as default for next photos",
+"Lưu ý": "Note",
+"Lưu ảnh": "Save photo",
+"Lật dọc": "Flip vertical",
+"Lật ngang": "Flip horizontal",
+"Lặp phủ kín ảnh": "Tile across photo",
+"Lề": "Margin",
+"Màu mẫu": "Sample colors",
+"Màu mẫu đã lưu": "Saved sample colors",
+"Màu nền chữ": "Text background color",
+"Màu viền": "Outline color",
+"Mũi tên": "Arrow",
+"Mạnh, khớp sát": "Strong, close match",
+"Mẫu": "Sample",
+"Mặc định": "Default",
+"Mức độ": "Intensity",
+"Nghiêng": "Italic",
+"Nhân đôi": "Duplicate",
+"Nhấn giữ vào chữ trong ảnh, kéo chọn nội dung cần sử dụng rồi chọn “Sao chép”, sau đó chọn tính năng “Dán”.": "Press and hold text in the photo, drag to select what you need, tap “Copy”, then use “Paste”.",
+"Nhập chữ": "Enter text",
+"Nhập chữ…": "Enter text…",
+"Nhập từ file": "Import from file",
+"Nhẹ, giữ chi tiết": "Light, keep detail",
+"Nên đọc lại để sửa lỗi.": "Please proofread to fix mistakes.",
+"Nắn thẳng (độ)": "Straighten (°)",
+"Nền chữ": "Text background",
+"Phiên bản": "Version",
+"Phơi sáng": "Exposure",
+"Phải": "Right",
+"Scan có thể sai nội dung, bạn cần kiểm tra và sửa lại.": "Scanned text may contain errors. Please check and correct it.",
+"Sắc thái": "Tint",
+"Sống động": "Vibrance",
+"Thoát": "Close",
+"Thêm": "More",
+"Thêm viền dưới": "Add bottom border",
+"Thấp: có thể là chữ viết tay hoặc ảnh mờ, nên kiểm tra kỹ.": "Low: may be handwriting or a blurry photo, please check carefully.",
+"Thủ công": "Manual",
+"Tiếp tục": "Continue",
+"Tiếp tục và xóa chúng": "Continue and remove them",
+"Trái": "Left",
+"Tên bộ chỉnh riêng": "Preset name",
+"Tên cửa hàng, số điện thoại…": "Shop name, phone number…",
+"Tên màu mẫu": "Sample color name",
+"Tô kín vật cần xóa, kể cả bóng của nó. Hợp nhất với vật nhỏ trên nền có hoa văn hoặc nền đơn giản; vật lớn hoặc nền phức tạp có thể lộ vết vá, hãy xóa từng phần nhỏ.": "Paint over the whole object, including its shadow. Works best for small objects on patterned or plain backgrounds; large objects or busy backgrounds may show patch marks, so erase in small parts.",
+"Tô vùng": "Paint area",
+"Tô vùng da để làm mịn. “Đều màu da” tự nhận biết da; bật “Vùng da” để xem, rồi “Tẩy vùng tô” để loại chỗ chọn sai (không tô thì áp cả ảnh). Vùng đã tô hiện màu gạch đỏ. Tránh tô mắt, môi, lông mày để giữ nét. Chọn “Xem kết quả” để kiểm tra.": "Paint skin areas to smooth them. “Even skin tone” detects skin automatically; turn on “Skin area” to see it, then use “Erase paint” to remove wrong spots (with no paint, the whole photo is used). Painted areas show in brick red. Avoid eyes, lips and eyebrows to keep them sharp. Choose “Preview” to check.",
+"Tô vùng xóa": "Paint area to erase",
+"Tương phản": "Contrast",
+"Tẩy": "Eraser",
+"Tẩy nét tô": "Erase strokes",
+"Tẩy vùng tô": "Erase paint",
+"Tắt hết": "Turn all off",
+"Tự do": "Free",
+"Tự xóa ngay khi nhấc tay": "Erase as soon as you lift your finger",
+"Tự động": "Auto",
+"Tỷ lệ gốc": "Original ratio",
+"Viền chữ": "Text outline",
+"Viền dày": "Thick border",
+"Viền mỏng": "Thin border",
+"Vùng cắt quá nhỏ": "Crop area is too small",
+"Vùng da": "Skin area",
+"Vùng sáng": "Highlights",
+"Vùng tối": "Shadows",
+"Văn bản": "Text",
+"Vẽ": "Draw",
+"Vẽ bằng một ngón tay; hai ngón để phóng to, kéo. “Tẩy” chỉ xóa nét đã vẽ, không đụng đến ảnh.": "Draw with one finger; use two fingers to zoom and pan. “Eraser” only removes drawn strokes, not the photo.",
+"Xem kết quả": "Preview",
+"Xoay (độ)": "Rotate (°)",
+"Xoay / lật ảnh": "Rotate / flip",
+"Xoay phải": "Rotate right",
+"Xoay trái": "Rotate left",
+"Xuất ra file": "Export to file",
+"Xóa": "Delete",
+"Xóa bóng": "Remove shadow",
+"Xóa bộ chỉnh": "Delete preset",
+"Xóa hết": "Clear all",
+"Xóa hết nét vẽ": "Clear all strokes",
+"Xóa hết vùng tô": "Clear all painted areas",
+"Xóa lỗi, thử tô vùng nhỏ hơn": "Erase failed, try painting a smaller area",
+"Xóa lớp chữ": "Delete text layer",
+"Xóa màu mẫu": "Delete sample color",
+"Xóa nét cuối": "Undo last stroke",
+"Xóa nét vẽ": "Clear strokes",
+"Xóa tất cả nét vẽ trên ảnh?": "Delete all strokes on the photo?",
+"Xóa vùng đã tô": "Clear painted area",
+"màu": "color",
+"màu khác": "other color",
+"màu mẫu": "sample color",
+"màu nền": "background color",
+"màu viền": "outline color",
+"dọc": "vertical",
+"Áp dụng": "Apply",
+"Áp dụng cho ảnh mở sau này. Ảnh càng lớn càng nặng máy; 3000 px là mức cân bằng cho iPhone.": "Applies to photos opened later. Larger photos are heavier on the device; 3000 px is a good balance for iPhone.",
+"Áp dụng cắt": "Apply crop",
+"Đang chuẩn bị…": "Preparing…",
+"Đang làm sạch ảnh…": "Cleaning photo…",
+"Đang nhận dạng": "Recognizing",
+"Đang tải dữ liệu": "Loading data",
+"Đang xem kết quả, vùng tô được ẩn. Hai ngón để phóng to, kéo để di chuyển.": "Previewing the result; painted areas are hidden. Use two fingers to zoom and pan.",
+"Đang xóa vật thể…": "Removing object…",
+"Đang đọc chữ…": "Reading text…",
+"Đang đọc màu ảnh mẫu…": "Reading sample colors…",
+"Đang đọc…": "Reading…",
+"Điểm đen": "Black point",
+"Đã dán chữ. Sửa trực tiếp trên trang A4 rồi bấm ✓ để xác nhận.": "Text pasted. Edit it directly on the A4 page, then tap ✓ to confirm.",
+"Đã lưu dấu tên làm mặc định": "Name mark saved as default",
+"Đã lưu màu mẫu": "Sample color saved",
+"Đã nhập": "Imported",
+"Đã sao chép": "Copied",
+"Đã tạo trang A4": "A4 page created",
+"Đã tự động chỉnh": "Auto adjusted",
+"Đã xóa vật thể": "Object removed",
+"Đóng": "Close",
+"Đặt lại": "Reset",
+"Đặt lại tất cả": "Reset all",
+"Đẹp": "Beauty",
+"Đều màu da": "Even skin tone",
+"Đổ bóng": "Shadow",
+"Đổ bóng ảnh": "Photo shadow",
+"Đổi kiểu": "Change style",
+"Đổi logo": "Change logo",
+"Đổi ảnh mẫu": "Change sample photo",
+"Độ dày": "Thickness",
+"Độ dày viền": "Outline thickness",
+"Độ mịn da": "Skin smoothness",
+"Độ nét": "Sharpness",
+"Độ rực": "Vividness",
+"Độ sáng": "Brightness",
+"Độ tin cậy ước tính": "Estimated confidence",
+"Độ đậm": "Boldness",
+"Độ ấm": "Warmth",
+"Ảnh cần sửa": "Photo to edit",
+"Ảnh mẫu": "Sample photo",
+"Ảnh đang sửa": "Current photo",
+"Ảnh đang sửa sẽ bị đóng. Hãy lưu trước nếu cần.": "The photo being edited will be closed. Save first if needed.",
+"＋ Lưu bộ chỉnh": "＋ Save preset",
+"＋ Lưu màu này": "＋ Save this color",
+"＋ Thêm chữ": "＋ Add text",
+"1 lớn, 1 nhỏ": "1 large, 1 small",
+"2 cột": "2 columns",
+"2 hàng": "2 rows",
+"2 trên, 3 dưới": "2 top, 3 bottom",
+"3 khung dọc": "3 vertical frames",
+"3 trên, 2 dưới": "3 top, 2 bottom",
+"4 khung dọc": "4 vertical frames",
+"Bỏ ảnh": "Remove photo",
+"Chạm vào một khung để chọn, chạm khung trống để thêm ảnh.": "Tap a frame to select it, tap an empty frame to add a photo.",
+"Chỉnh tiếp": "Keep editing",
+"Chỉnh tiếp trong Fox-edit": "Keep editing in Fox-edit",
+"Chọn nhiều ảnh cùng lúc": "Choose several photos at once",
+"Các khung đã đầy, hãy bỏ bớt ảnh hoặc chọn số ảnh nhiều hơn": "All frames are full. Remove a photo or choose a layout with more frames.",
+"Có ảnh không mở được": "Some photos could not be opened",
+"Ghép ảnh": "Collage",
+"Ghép ảnh lỗi: hết bộ nhớ": "Collage failed: out of memory",
+"Hãy thêm ít nhất một ảnh": "Add at least one photo",
+"Khoảng cách": "Spacing",
+"Khung số": "Frame no.",
+"Kéo ngón tay trên khung để dịch ảnh.": "Drag your finger on a frame to move the photo.",
+"Lưới 2×2": "Grid 2×2",
+"Lưới 2×3": "Grid 2×3",
+"Lưới 3×2": "Grid 3×2",
+"Lớn trái, 2 phải": "Large left, 2 right",
+"Lớn trái, 4 phải": "Large left, 4 right",
+"Lớn trên, 2 dưới": "Large top, 2 bottom",
+"Lớn trên, 3 dưới": "Large top, 3 bottom",
+"Lớn trên, nhỏ dưới": "Large top, small bottom",
+"Lớn, 5 nhỏ": "1 large, 5 small",
+"Màu nền": "Background color",
+"Phóng to": "Zoom in",
+"Thay bằng ảnh ghép": "Replace with collage",
+"Đang ghép ảnh…": "Building collage…",
+"Đổi ảnh": "Change photo",
+"Ảnh trong khung": "Photo in frame",
+"Ảnh đang sửa sẽ bị thay bằng ảnh ghép. Hãy lưu trước nếu cần.": "The photo being edited will be replaced by the collage. Save first if needed.",
+"ảnh": "photos",
+"ảnh thừa": "extra photos",
+"khung trống, đã bỏ": "empty frames, skipped",
+"(không tên)": "(unnamed)",
+"Bấm “Lưu vào máy” rồi chọn “Lưu ảnh”, hoặc nhấn giữ ảnh và chọn “Thêm vào Ảnh”.": "Tap “Save to device” then choose “Save Image”, or press and hold the photo and choose “Add to Photos”.",
+"Chụp": "Shoot",
+"Không lưu được ảnh": "Could not save the photo",
+"Không mở được camera. Hãy cho phép truy cập camera, hoặc dùng ảnh chụp từ máy.": "Could not open the camera. Please allow camera access, or use a photo from your device.",
+"Không tìm thấy camera góc rộng. Camera:": "Ultra-wide camera not found. Cameras:",
+"Không đổi được camera": "Could not switch camera",
+"Lưu vào máy": "Save to device",
+"Lưu ảnh vào máy": "Save photo to device",
+"Lưới": "Grid",
+"Ảnh": "Photos",
+"Tắt": "Off",
+"Về 50": "Reset to 50",
+"giây": "s",
+"không có tên": "no name",
+"· góc rộng": "· ultra-wide",
+"· zoom máy": "· hardware zoom",
+"Đổi camera": "Flip camera",
+"⚡ Bật": "⚡ On",
+"⚡ Tắt": "⚡ Off",
+"iPhone chưa cho web app chọn điểm lấy nét; máy vẫn tự lấy nét liên tục. Vuốt lên/xuống để chỉnh sáng.": "iPhone does not let web apps choose the focus point; the camera keeps auto-focusing. Swipe up/down to adjust brightness.",
+"Ngôn ngữ": "Language",
+"Khung": "Frame",
+"3 khung ngang": "3 horizontal frames",
+"4 khung ngang": "4 horizontal frames",
+"6 khung ngang": "6 horizontal frames",
+"Elip": "Ellipse"
+};
+var EN_RXS=[["^Đã nhập (\\d+) bộ chỉnh, (\\d+) màu mẫu$", "Imported $1 presets, $2 sample colors"], ["^Đã lưu “(.*)”$", "Saved “$1”"], ["^Đã áp dụng “(.*)”$", "Applied “$1”"], ["^Xóa “(.*)” khỏi máy\\?$", "Delete “$1” from this device?"], ["^Phiên bản (.*)$", "Version $1"], ["^Màn hình: cao (\\d+) / máy (\\d+), vùng an toàn trên (\\S+), dưới (\\S+) · chế độ app$", "Screen: height $1 / device $2, safe area top $3, bottom $4 · app mode"], ["^Màn hình: cao (\\d+) / máy (\\d+), vùng an toàn trên (\\S+), dưới (\\S+) · trong Safari$", "Screen: height $1 / device $2, safe area top $3, bottom $4 · in Safari"], ["^(\\d+) giây$", "$1 s"], ["^Đã tạo trang A4 ngang \\(chữ thu nhỏ cho vừa trang\\)$", "A4 page created, landscape (text shrunk to fit)"], ["^Đã tạo trang A4 dọc \\(chữ thu nhỏ cho vừa trang\\)$", "A4 page created, portrait (text shrunk to fit)"], ["^Đã tạo trang A4 ngang$", "A4 page created, landscape"], ["^Đã tạo trang A4 dọc$", "A4 page created, portrait"], ["^Chỉ có (\\d+) khung trống, đã bỏ (\\d+) ảnh thừa$", "Only $1 empty frames; $2 extra photos skipped"], ["^Không tìm thấy camera góc rộng\\. Camera: không có tên$", "Ultra-wide camera not found. Cameras: no name"], ["^Không tìm thấy camera góc rộng\\. Camera: (.*)$", "Ultra-wide camera not found. Cameras: $1"], ["^Đang nhận dạng (\\d+)%$", "Recognizing $1%"], ["^Đang tải dữ liệu (\\d+)%$", "Loading data $1%"], ["^Độ tin cậy ước tính (\\d+)/100\\. Thấp: .*$", "Estimated confidence $1/100. Low: may be handwriting or a blurry photo, please check carefully."], ["^Độ tin cậy ước tính (\\d+)/100\\. Nên đọc lại để sửa lỗi\\.$", "Estimated confidence $1/100. Please proofread to fix mistakes."], ["^Ảnh xuất theo kích thước đang làm việc \\((\\d+)×(\\d+) px, chưa tính khung\\)\\. Trong bảng hiện ra, chọn “Lưu hình ảnh” để vào thư viện Ảnh\\.$", "Photo is exported at the current working size ($1×$2 px, frame not included). In the sheet that appears, choose “Save Image” to add it to your Photos library."], ["^⏱ Tắt$", "⏱ Off"], ["^⏱ (\\d+) giây$", "⏱ $1 s"], ["^(\\d+) ảnh$", "$1 photos"]];
+var EN_SUB=[[" · góc rộng", " · ultra-wide"], [" · zoom máy", " · hardware zoom"]];
+/* ===== Ngôn ngữ: nguồn là tiếng Việt, bản tiếng Anh dịch tại chỗ trên DOM (tên màu film luôn là tiếng Anh) ===== */
+var EN_RX=EN_RXS.map(function(a){return [new RegExp(a[0]),a[1]]});
+var I18N={w:new WeakMap(),obs:null,on:false};
+function trS(s){
+  if(Object.prototype.hasOwnProperty.call(EN,s))return EN[s];
+  if(!/[A-Za-zÀ-ỹ]/.test(s))return null;
+  for(var i=0;i<EN_RX.length;i++){if(EN_RX[i][0].test(s))return s.replace(EN_RX[i][0],EN_RX[i][1])}
+  for(var k=0;k<EN_SUB.length;k++){if(s.indexOf(EN_SUB[k][0])>=0){var r=s.split(EN_SUB[k][0]).join(EN_SUB[k][1]);if(r!==s)return r}}
+  return null;
+}
+function trWrap(v){ /* giữ khoảng trắng đầu/cuối */
+  var m=/^(\s*)([\s\S]*?)(\s*)$/.exec(v),t=trS(m[2]);return t===null?null:m[1]+t+m[3];
+}
+function trText(n){
+  var cur=n.nodeValue,o=I18N.w.get(n);
+  if(o&&o.cur===cur){var want=LOCAL.lang==='vi'?o.vi:o.en;if(cur!==want){n.nodeValue=want;o.cur=want}return}
+  var en=trWrap(cur);if(en===null){if(o)I18N.w.delete(n);return}
+  o={vi:cur,en:en,cur:cur};I18N.w.set(n,o);
+  if(LOCAL.lang!=='vi'){n.nodeValue=en;o.cur=en}
+}
+var TR_ATTR=['placeholder','title','aria-label','alt'];
+function trAttr(el,a){
+  var v=el.getAttribute(a);if(v===null)return;
+  var m=I18N.w.get(el);if(!m){m={};I18N.w.set(el,m)}
+  var o=m[a];
+  if(o&&o.cur===v){var want=LOCAL.lang==='vi'?o.vi:o.en;if(v!==want){el.setAttribute(a,want);o.cur=want}return}
+  var en=trWrap(v);if(en===null){delete m[a];return}
+  o={vi:v,en:en,cur:v};m[a]=o;
+  if(LOCAL.lang!=='vi'){el.setAttribute(a,en);o.cur=en}
+}
+function trTree(root){
+  if(!root)return;
+  if(root.nodeType===3){var p=root.parentNode;if(p&&/^(SCRIPT|STYLE|TEXTAREA)$/.test(p.nodeName))return;trText(root);return}
+  if(root.nodeType!==1)return;
+  if(/^(SCRIPT|STYLE)$/.test(root.nodeName))return;
+  var w=document.createTreeWalker(root,NodeFilter.SHOW_ELEMENT|NodeFilter.SHOW_TEXT,null),n=w.currentNode;
+  while(n){
+    if(n.nodeType===3){var p2=n.parentNode;if(!(p2&&/^(SCRIPT|STYLE|TEXTAREA)$/.test(p2.nodeName)))trText(n)}
+    else if(n.nodeType===1){for(var i=0;i<TR_ATTR.length;i++)if(n.hasAttribute(TR_ATTR[i]))trAttr(n,TR_ATTR[i])}
+    n=w.nextNode();
+  }
+}
+function setLang(l){
+  LOCAL.lang=l==='vi'?'vi':'en';saveLocal();
+  document.documentElement.lang=LOCAL.lang;
+  trTree(document.body);
+}
+function initLang(){
+  document.documentElement.lang=LOCAL.lang==='vi'?'vi':'en';
+  trTree(document.body);
+  I18N.obs=new MutationObserver(function(recs){
+    for(var i=0;i<recs.length;i++){
+      var r=recs[i];
+      if(r.type==='childList'){for(var j=0;j<r.addedNodes.length;j++)trTree(r.addedNodes[j])}
+      else if(r.type==='characterData'){trTree(r.target)}
+      else if(r.type==='attributes'){trAttr(r.target,r.attributeName)}
+    }
+  });
+  I18N.obs.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:TR_ATTR});
+}
+initLang();
 </script>
 </body>
 </html>
