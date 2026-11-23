@@ -164,9 +164,21 @@ select.sel,input.txt{width:100%;border:1.5px solid var(--ink);border-radius:var(
 #camZ{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:flex;gap:6px;background:#0007;border-radius:20px;padding:4px 6px}
 #camZ button{min-width:38px;height:30px;border-radius:15px;border:0;background:transparent;color:#fff;font:600 14px FoxBody,sans-serif}
 #camZ button.on{background:var(--mint);color:var(--ink)}
-@keyframes camF{0%{transform:translate(-50%,-50%) scale(1.5);opacity:0}20%{opacity:1}100%{transform:translate(-50%,-50%) scale(1);opacity:.9}}
-.camFocus{position:absolute;width:64px;height:64px;border:2px solid #ffd54a;border-radius:6px;pointer-events:none;animation:camF .35s ease-out forwards}
-#camInfo{position:absolute;left:8px;top:6px;font:11px FoxBody,sans-serif;color:#fffc;text-shadow:0 0 3px #000}
+@keyframes camF{0%{transform:translate(-50%,-50%) scale(1.5);opacity:0}20%{opacity:1}100%{transform:translate(-50%,-50%) scale(1);opacity:1}}
+.camFocus{position:absolute;z-index:4;width:72px;height:72px;pointer-events:none;animation:camF .3s ease-out forwards}
+.camFocus i{position:absolute;inset:0;border:2px solid #ffd54a;border-radius:4px;box-shadow:0 0 3px #0008}
+.camFocus .fev{position:absolute;left:84px;top:-34px;width:2px;height:140px;background:#ffd54acc}
+.camFocus.l .fev{left:auto;right:84px}
+.camFocus .fev b{position:absolute;left:-10px;margin-top:-11px;width:22px;height:22px;line-height:22px;text-align:center;color:#ffd54a;font:400 20px sans-serif;text-shadow:0 0 3px #000}
+.camFocus .fev small{position:absolute;left:26px;top:2px;font:600 12px FoxBody,sans-serif;white-space:nowrap}
+.camFocus.l .fev small{left:auto;right:26px}
+#camBox{touch-action:none}
+#camTop{position:absolute;right:8px;top:6px;display:flex;gap:6px;z-index:5}
+#camTop button{height:28px;padding:0 10px;border-radius:14px;border:0;background:#0007;color:#fff;font:600 13px FoxBody,sans-serif}
+#camTop button.on{background:#ffd54a;color:#000}
+#camCd{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:700 110px FoxBody,sans-serif;color:#fff;text-shadow:0 0 12px #000a;pointer-events:none;z-index:6}
+#camSF{position:absolute;inset:0;background:#fff;z-index:30}
+#camInfo{position:absolute;left:8px;top:10px;font:11px FoxBody,sans-serif;color:#fffc;text-shadow:0 0 3px #000}
 #camFlash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .12s}
 #camOv .cp{background:#fff;border-top:1.8px solid var(--ink);padding:6px 10px calc(env(safe-area-inset-bottom) + 10px)}
 #camOv .shot{display:flex;justify-content:space-between;align-items:center;padding:2px 14px 8px}
@@ -204,7 +216,7 @@ select.sel,input.txt{width:100%;border:1.5px solid var(--ink);border-radius:var(
 <div id="busy" hidden><div class="sp"></div><div id="busyMsg">Đang xử lý…</div><div class="pb"><div id="busyBar"></div></div></div>
 <script>
 'use strict';
-var APP_VER='3.26 (23/11/2026)';
+var APP_VER='3.27 (23/11/2026)';
 function $(s,r){return (r||document).querySelector(s)}
 function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
 function clamp(v,a,b){return v<a?a:(v>b?b:v)}
@@ -2573,9 +2585,9 @@ async function colSave(){
 }
 $('#bCollage').addEventListener('click',openCollage);
 /* ===== Chụp ảnh trực tiếp, xem trước màu film ===== */
-var CAM={lens:'main',ultra:null,z:1,stream:null,facing:'environment',fc:0,fi:-1,t:1,raf:0,last:0,vid:null,off:null};
+var CAM={lens:'main',ultra:null,z:1,stream:null,facing:'environment',fc:0,fi:-1,t:1,raf:0,last:0,vid:null,off:null,ev:0,tm:0,fl:0,fe:null};
 function camHtml(){
-  var h='<div class="ct"><button class="bt sm" id="camX">Thoát</button><div class="ttl">Chụp ảnh</div><button class="bt sm" id="camFlip">Đổi camera</button></div><div class="vf"><div id="camBox"><canvas id="camV"></canvas><div id="camGrid"'+(CAM.grid?'':' hidden')+'></div><div id="camFlash"></div><div id="camZ">'+(CAM.facing==='environment'?[0.5,1,2,3,5]:[1,2,3,5]).map(function(z){return '<button data-z="'+z+'" class="'+(Math.abs(CAM.z-z)<0.05?'on':'')+'">'+String(z).replace('.',',')+'x</button>'}).join('')+'</div><div id="camInfo"></div></div></div><div class="cp"><div class="shot"><button class="bt sm" id="camAlbum">Ảnh</button><button id="camShot" aria-label="Chụp"></button><button class="bt sm" id="camPk">Gốc</button><button class="bt sm'+(CAM.grid?' on':'')+'" id="camGr">Lưới</button></div><div class="chips" id="camCat">';
+  var h='<div class="ct"><button class="bt sm" id="camX">Thoát</button><div class="ttl">Chụp ảnh</div><button class="bt sm" id="camFlip">Đổi camera</button></div><div class="vf"><div id="camBox"><canvas id="camV"></canvas><div id="camTop">'+(CAM.torch||CAM.facing==='user'?'<button id="camFl" class="'+(CAM.fl?'on':'')+'">'+(CAM.fl?'⚡ Bật':'⚡ Tắt')+'</button>':'')+'<button id="camTm" class="'+(CAM.tm?'on':'')+'">⏱ '+(CAM.tm?CAM.tm+' giây':'Tắt')+'</button></div><div id="camGrid"'+(CAM.grid?'':' hidden')+'></div><div id="camFlash"></div><div id="camZ">'+(CAM.facing==='environment'?[0.5,1,2,3,5]:[1,2,3,5]).map(function(z){return '<button data-z="'+z+'" class="'+(Math.abs(CAM.z-z)<0.05?'on':'')+'">'+String(z).replace('.',',')+'x</button>'}).join('')+'</div><div id="camInfo"></div></div></div><div class="cp"><div class="shot"><button class="bt sm" id="camAlbum">Ảnh</button><button id="camShot" aria-label="Chụp"></button><button class="bt sm" id="camPk">Gốc</button><button class="bt sm'+(CAM.grid?' on':'')+'" id="camGr">Lưới</button></div><div class="chips" id="camCat">';
   FILM.forEach(function(c,i){h+='<button class="chip'+(CAM.fc===i?' on':'')+'" data-cc="'+i+'">'+esc(c.name)+'</button>'});
   h+='</div><div class="chips" id="camStrip"><button class="chip'+(CAM.fi<0?' on':'')+'" data-cf="-1">Gốc</button>';
   FILM[CAM.fc].list.forEach(function(p,i){h+='<button class="chip'+(CAM.fi===i&&CAM.fcSel===CAM.fc?' on':'')+'" data-cf="'+i+'">'+esc(p.name)+'</button>'});
@@ -2603,8 +2615,10 @@ async function camSetZoom(z){
   var tr=CAM.stream&&CAM.stream.getVideoTracks()[0],cp=tr&&tr.getCapabilities&&tr.getCapabilities();
   if(CAM.lens==='main'&&cp&&cp.zoom&&cp.zoom.max>=z){try{await tr.applyConstraints({advanced:[{zoom:Math.max(cp.zoom.min||1,z)}]});CAM.hw=true}catch(e){CAM.hw=false}}
   camMark(z);camVidFx();
-  var zi=$('#camInfo');if(zi)zi.textContent=(Math.round(z*10)/10)+'x · '+(CAM.vid?CAM.vid.videoWidth+'×'+CAM.vid.videoHeight:'')+(CAM.lens==='ultra'?' · góc rộng':'')+(CAM.hw?' · zoom máy':'');
+  camInfoTxt();
 }
+function camInfoTxt(){var zi=$('#camInfo');if(zi)zi.textContent=(Math.round(CAM.z*10)/10)+'x · '+(CAM.vid?CAM.vid.videoWidth+'×'+CAM.vid.videoHeight:'')+(CAM.lens==='ultra'?' · góc rộng':'')+(CAM.hw?' · zoom máy':'')+(CAM.ev?' · EV '+camEvS():'')}
+function camEvS(){var v=Math.round(CAM.ev*10)/10;return (v>0?'+':'')+String(v).replace('.',',')}
 function camFit(){
   var vf=$('#camOv .vf'),bx=$('#camBox');if(!vf||!bx)return;
   var w=vf.clientWidth,h=vf.clientHeight,bh=Math.min(h,w*4/3),bw=bh*3/4;
@@ -2629,6 +2643,7 @@ function camVidFx(){
   var v=CAM.vid,cv=$('#camV');if(!v)return;
   var zf=(CAM.hw?1:(CAM.zf||CAM.z))||1,mir=CAM.facing==='user'?' scaleX(-1)':'';
   v.style.transform='scale('+zf+')'+mir;
+  v.style.filter=camSw()?'brightness('+Math.pow(2,CAM.ev/2.2).toFixed(3)+')':'';
   var film=CAM.fi>=0&&!CAM.peek;
   if(cv)cv.style.visibility=film?'visible':'hidden';
 }
@@ -2641,7 +2656,7 @@ function camTick(ts){
   var cr=camCrop(v),w=450,h=600;
   if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h}
   var cx=cv.getContext('2d',{willReadFrequently:true});cx.imageSmoothingQuality='high';cx.drawImage(v,cr[0],cr[1],cr[2],cr[3],0,0,w,h);
-  var id=cx.getImageData(0,0,w,h),q=combine({adj:defP().adj,film:{c:CAM.fcSel,i:CAM.fi,t:CAM.t}});q.gr=0;
+  var id=cx.getImageData(0,0,w,h),q=combine({adj:defP().adj,film:{c:CAM.fcSel,i:CAM.fi,t:CAM.t}});q.gr=0;if(camSw())q.ex+=CAM.ev/1.6;
   cx.putImageData(new ImageData(colorPass(id.data,w,h,q,null),w,h),0,0);
 }
 async function camStart(){
@@ -2649,7 +2664,37 @@ async function camStart(){
   var vc={width:{ideal:1920},height:{ideal:1440},aspectRatio:{ideal:4/3}};
   if(CAM.lens==='ultra'&&CAM.ultra)vc.deviceId={exact:CAM.ultra};else vc.facingMode={ideal:CAM.facing};
   CAM.stream=await navigator.mediaDevices.getUserMedia({video:vc,audio:false});
-  var v=CAM.vid;v.srcObject=CAM.stream;await v.play();
+  var v=CAM.vid;v.srcObject=CAM.stream;await v.play();camCaps();
+}
+function camSw(){return CAM.ev&&!CAM.hwEv}
+function camCaps(){
+  var tr=CAM.stream&&CAM.stream.getVideoTracks()[0],cp=tr&&tr.getCapabilities&&tr.getCapabilities();
+  CAM.hwEv=!!(cp&&cp.exposureCompensation&&typeof cp.exposureCompensation.max==='number');CAM.torch=!!(cp&&cp.torch);
+  if(CAM.hwEv&&CAM.ev){try{tr.applyConstraints({advanced:[{exposureCompensation:Math.max(cp.exposureCompensation.min,Math.min(cp.exposureCompensation.max,CAM.ev))}]})}catch(e){}}
+  camVidFx();
+}
+function camSetEv(v){
+  CAM.ev=Math.max(-3,Math.min(3,Math.round(v*10)/10));
+  var tr=CAM.stream&&CAM.stream.getVideoTracks()[0],cp=tr&&tr.getCapabilities&&tr.getCapabilities();
+  if(CAM.hwEv&&cp&&cp.exposureCompensation){try{tr.applyConstraints({advanced:[{exposureCompensation:Math.max(cp.exposureCompensation.min,Math.min(cp.exposureCompensation.max,CAM.ev))}]})}catch(e){}}
+  camVidFx();camEvUi();camInfoTxt();
+}
+function camEvUi(){
+  var el=CAM.fe;if(!el)return;var b=el.querySelector('b'),sm=el.querySelector('small');
+  b.style.top=((1-(CAM.ev+3)/6)*100)+'%';sm.textContent=camEvS();
+}
+function camFocusHold(){clearTimeout(CAM.ft);CAM.ft=setTimeout(function(){if(CAM.fe){CAM.fe.remove();CAM.fe=null}},3500)}
+async function camFocusShow(px,py){
+  var bx=$('#camBox');if(!bx)return;
+  if(CAM.fe)CAM.fe.remove();
+  var el=document.createElement('div');el.className='camFocus'+(px>0.7?' l':'');el.style.left=(px*100)+'%';el.style.top=(py*100)+'%';
+  el.innerHTML='<i></i><div class="fev"><b>☀<small></small></b></div>';bx.appendChild(el);CAM.fe=el;camEvUi();camFocusHold();
+  var v=CAM.vid,tr=CAM.stream&&CAM.stream.getVideoTracks()[0];if(!v||!tr||!v.videoWidth)return;
+  var cr=camCrop(v),mx=CAM.facing==='user'?1-px:px,vx=(cr[0]+mx*cr[2])/v.videoWidth,vy=(cr[1]+py*cr[3])/v.videoHeight,cp=tr.getCapabilities&&tr.getCapabilities(),ok=false;
+  if(cp&&cp.focusMode&&cp.focusMode.indexOf&&cp.focusMode.indexOf('single-shot')>=0){
+    try{await tr.applyConstraints({advanced:[{focusMode:'single-shot',pointsOfInterest:[{x:vx,y:vy}]}]});ok=true;setTimeout(function(){try{tr.applyConstraints({advanced:[{focusMode:'continuous'}]})}catch(x){}},1500)}catch(x){}
+  }
+  if(!ok&&!CAM.focusNote){CAM.focusNote=true;toast('iPhone chưa cho web app chọn điểm lấy nét; máy vẫn tự lấy nét liên tục. Vuốt lên/xuống để chỉnh sáng.')}
 }
 async function camFindUltra(){
   CAM.labels=[];
@@ -2663,7 +2708,7 @@ async function camFindUltra(){
 }
 async function openCam(){
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$('#fileCam').value='';$('#fileCam').click();return}
-  CAM.z=1;CAM.zf=1;CAM.lens='main';CAM.hw=false;CAM.fc=0;CAM.fi=-1;CAM.fcSel=0;CAM.t=1;CAM.grid=false;CAM.busy=false;CAM.peek=false;
+  CAM.z=1;CAM.zf=1;CAM.lens='main';CAM.hw=false;CAM.fc=0;CAM.fi=-1;CAM.fcSel=0;CAM.t=1;CAM.grid=false;CAM.busy=false;CAM.peek=false;CAM.ev=0;CAM.tm=0;CAM.fl=0;CAM.fe=null;CAM.cd=0;
   var o=document.createElement('div');o.id='camOv';document.body.appendChild(o);
   var v=document.createElement('video');v.setAttribute('playsinline','');v.muted=true;CAM.vid=v;
   camRender();
@@ -2678,8 +2723,10 @@ async function openCam(){
   o.addEventListener('click',async function(e){
     var b=e.target.closest('button');if(!b)return;
     if(b.id==='camX')closeCam();
-    else if(b.id==='camFlip'){CAM.facing=CAM.facing==='user'?'environment':'user';CAM.lens='main';CAM.z=1;CAM.zf=1;try{await camStart();camRender();camSetZoom(1)}catch(x){toast('Không đổi được camera')}}
-    else if(b.id==='camShot')camShot();
+    else if(b.id==='camFlip'){CAM.facing=CAM.facing==='user'?'environment':'user';CAM.lens='main';CAM.z=1;CAM.zf=1;CAM.ev=0;CAM.fe=null;try{await camStart();camRender();camSetZoom(1)}catch(x){toast('Không đổi được camera')}}
+    else if(b.id==='camShot')camShotBtn();
+    else if(b.id==='camTm'){CAM.tm=CAM.tm===0?3:(CAM.tm===3?10:0);camRender()}
+    else if(b.id==='camFl'){CAM.fl=CAM.fl?0:1;camRender()}
     else if(b.hasAttribute('data-z'))camSetZoom(+b.getAttribute('data-z'));
     else if(b.id==='camGr'){CAM.grid=!CAM.grid;camRender()}
     else if(b.id==='camAlbum'){closeCam();$('#fileMain').value='';$('#fileMain').click()}
@@ -2692,17 +2739,29 @@ async function openCam(){
       var s2=$('#camStrip');s2.scrollLeft=L;if(D)requestAnimationFrame(function(){try{s2.scrollTo({left:L+D,behavior:'smooth'})}catch(x){s2.scrollLeft=L+D}});
     }
   });
-  o.addEventListener('click',async function(e){
-    if(e.target.closest('button')||!e.target.closest('#camBox'))return;
-    var bx=$('#camBox'),r=bx.getBoundingClientRect(),px=(e.clientX-r.left)/r.width,py=(e.clientY-r.top)/r.height;
-    var sq=document.createElement('div');sq.className='camFocus';sq.style.left=(px*100)+'%';sq.style.top=(py*100)+'%';bx.appendChild(sq);setTimeout(function(){sq.remove()},900);
-    var v=CAM.vid,tr=CAM.stream&&CAM.stream.getVideoTracks()[0];if(!v||!tr)return;
-    var cr=camCrop(v),mx=CAM.facing==='user'?1-px:px,vx=(cr[0]+mx*cr[2])/v.videoWidth,vy=(cr[1]+py*cr[3])/v.videoHeight,cp=tr.getCapabilities&&tr.getCapabilities(),ok=false;
-    if(cp&&cp.focusMode&&cp.focusMode.indexOf&&cp.focusMode.indexOf('single-shot')>=0){
-      try{await tr.applyConstraints({advanced:[{focusMode:'single-shot',pointsOfInterest:[{x:vx,y:vy}]}]});ok=true;setTimeout(function(){try{tr.applyConstraints({advanced:[{focusMode:'continuous'}]})}catch(x){}},1500)}catch(x){}
-    }
-    if(!ok&&!CAM.focusNote){CAM.focusNote=true;toast('iPhone chưa cho web app chọn điểm lấy nét; máy vẫn tự lấy nét liên tục.')}
+  var G={ids:{},mode:null,x0:0,y0:0,t0:0,ev0:0};
+  function gn(){return Object.keys(G.ids).length}
+  function bxP(x,y){var r=$('#camBox').getBoundingClientRect();return [(x-r.left)/r.width,(y-r.top)/r.height]}
+  o.addEventListener('pointerdown',function(e){
+    if(!e.target.closest('#camBox')||e.target.closest('button'))return;
+    G.ids[e.pointerId]=1;
+    if(gn()>1){G.mode='pinch';return}
+    G.x0=e.clientX;G.y0=e.clientY;G.t0=Date.now();G.ev0=CAM.ev;G.mode=null;
+    try{$('#camBox').setPointerCapture(e.pointerId)}catch(x){}
   });
+  o.addEventListener('pointermove',function(e){
+    if(!G.ids[e.pointerId]||gn()>1||G.mode==='pinch')return;
+    var dx=e.clientX-G.x0,dy=e.clientY-G.y0;
+    if(!G.mode&&Math.abs(dy)>10&&Math.abs(dy)>Math.abs(dx)){G.mode='ev';if(!CAM.fe){var p=bxP(G.x0,G.y0);camFocusShow(p[0],p[1])}}
+    if(G.mode==='ev'){camSetEv(G.ev0-dy/($('#camBox').clientHeight/4));camFocusHold()}
+  });
+  function gUp(e){
+    if(!G.ids[e.pointerId])return;delete G.ids[e.pointerId];
+    var tap=!G.mode&&gn()===0&&e.type==='pointerup'&&Math.hypot(e.clientX-G.x0,e.clientY-G.y0)<10&&Date.now()-G.t0<600;
+    if(gn()===0)G.mode=null;
+    if(tap){var p=bxP(e.clientX,e.clientY);camFocusShow(p[0],p[1])}
+  }
+  o.addEventListener('pointerup',gUp);o.addEventListener('pointercancel',gUp);
   var pd=0,pz=1;
   function dist(t){return Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY)}
   o.addEventListener('touchstart',function(e){if(e.touches.length===2&&e.target.closest('#camBox')){pd=dist(e.touches);pz=CAM.z}},{passive:true});
@@ -2715,17 +2774,31 @@ function closeCam(){
   if(CAM.stream){CAM.stream.getTracks().forEach(function(t){t.stop()});CAM.stream=null}
   var o=$('#camOv');if(o)o.remove();CAM.vid=null;
 }
+function camCdShow(n){var bx=$('#camBox');if(!bx)return;var d=$('#camCd');if(!n){if(d)d.remove();return}if(!d){d=document.createElement('div');d.id='camCd';bx.appendChild(d)}d.textContent=n}
+async function camShotBtn(){
+  if(CAM.cd){CAM.cd=0;clearTimeout(CAM.cdt);camCdShow(0);return}
+  if(!CAM.tm||CAM.busy){camShot();return}
+  CAM.cd=CAM.tm;
+  (function step(){camCdShow(CAM.cd);CAM.cdt=setTimeout(function(){if(!CAM.cd)return;CAM.cd--;if(CAM.cd>0)step();else{camCdShow(0);camShot()}},1000)})();
+}
 async function camShot(){
   var v=CAM.vid;if(!v||!v.videoWidth||CAM.busy)return;
   CAM.busy=true;
+  var tr=CAM.stream&&CAM.stream.getVideoTracks()[0],sf=null,tc=false;
+  if(CAM.fl){
+    if(CAM.facing==='user'){sf=document.createElement('div');sf.id='camSF';$('#camOv').appendChild(sf);await new Promise(function(r){setTimeout(r,350)})}
+    else if(CAM.torch&&tr){try{await tr.applyConstraints({advanced:[{torch:true}]});tc=true;await new Promise(function(r){setTimeout(r,450)})}catch(e){}}
+  }
   var fl=$('#camFlash');if(fl){fl.style.opacity='1';setTimeout(function(){fl.style.opacity='0'},120)}
   var cr=camCrop(v),sc=Math.min(1,LOCAL.maxEdge/cr[3]),c=cv(Math.round(cr[2]*sc),Math.round(cr[3]*sc)),x=c.getContext('2d');
   if(CAM.facing==='user'){x.translate(c.width,0);x.scale(-1,1)}
   x.drawImage(v,cr[0],cr[1],cr[2],cr[3],0,0,c.width,c.height);
   try{
-    if(CAM.fi>=0&&!CAM.peek){
+    var fm=CAM.fi>=0&&!CAM.peek;
+    if(fm||camSw()){
       x.setTransform(1,0,0,1,0,0);
-      var id=x.getImageData(0,0,c.width,c.height),out=colorPass(id.data,c.width,c.height,combine({adj:defP().adj,film:{c:CAM.fcSel,i:CAM.fi,t:CAM.t}}),null);
+      var q=combine({adj:defP().adj,film:fm?{c:CAM.fcSel,i:CAM.fi,t:CAM.t}:{c:0,i:-1,t:1}});if(camSw())q.ex+=CAM.ev/1.6;
+      var id=x.getImageData(0,0,c.width,c.height),out=colorPass(id.data,c.width,c.height,q,null);
       x.putImageData(new ImageData(out,c.width,c.height),0,0);
     }
     var blob=await new Promise(function(r){c.toBlob(r,'image/jpeg',LOCAL.q||0.92)});
@@ -2746,6 +2819,7 @@ async function camShot(){
       setTimeout(function(){URL.revokeObjectURL(a.href)},4000);
     }
   }catch(e){toast('Không lưu được ảnh')}
+  if(sf)sf.remove();if(tc){try{tr.applyConstraints({advanced:[{torch:false}]})}catch(e){}}
   CAM.busy=false;
 }
 </script>
